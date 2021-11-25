@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/online-judge
+    username: root
+    password: issyu153
+
+mybatis-plus:
+  map-undersccore-to-camel-case: true
+
+

@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:mysql://101.37.20.199:3306/online-judge
+    username: remote
+    password: 123456
+
+mybatis-plus:
+  map-undersccore-to-camel-case: true
+fdfs:
+  so-timeout: 1501
+  connect-timeout: 601
+  tracker-list:
+    - 101.37.20.199:22122
+
+
