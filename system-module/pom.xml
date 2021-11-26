@@ -47,12 +47,7 @@
         </dependency>
         <dependency>
             <groupId>com.xmu</groupId>
-            <artifactId>contest-module</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.xmu</groupId>
-            <artifactId>non-contest-module</artifactId>
+            <artifactId>problem-module</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>

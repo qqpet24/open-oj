@@ -166,7 +166,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @see UserProfileVo
      */
     @Override
-    public Object createOrModifyUserInfo(Long userId, UserProfileVo userProfileVo) {
+    public Object modifyUserInfo(Long userId, UserProfileVo userProfileVo) {
         if (getById(userId) == null) {
             return Response.of(ResponseCode.USER_NOT_EXIST).entity(BAD_REQUEST);
         }
