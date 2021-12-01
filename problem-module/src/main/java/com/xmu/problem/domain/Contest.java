@@ -1,14 +1,13 @@
-package com.xmu.auth.domain;
-import com.baomidou.mybatisplus.annotation.IdType;
+package com.xmu.problem.domain;
+
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -19,11 +18,16 @@ import java.util.List;
 @AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 @Accessors(chain = true)
-@TableName(autoResultMap = true)
-public class Role {
-    @TableId(type= IdType.AUTO)
+public class Contest {
     private Long id;
-    private String roleName;
-    //@TableField(typeHandler = JacksonTypeHandler.class)
-    //private List<String> privileges;
+    private String title;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private String description;
+    @TableField("private")
+    private Integer isPrivate;
+    private Integer langMask;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<?> problems;
+
 }

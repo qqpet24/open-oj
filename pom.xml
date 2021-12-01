@@ -9,7 +9,7 @@
         <module>common-module</module>
         <module>system-module</module>
         <module>problem-module</module>
-        <module>discussion-module</module>
+        <module>other-module</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -91,7 +91,7 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.6.1</version>
+            <version>5.7.16</version>
         </dependency>
     </dependencies>
 

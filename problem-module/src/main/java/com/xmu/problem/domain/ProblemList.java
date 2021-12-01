@@ -1,8 +1,6 @@
-package com.xmu.auth.domain;
-import com.baomidou.mybatisplus.annotation.IdType;
+package com.xmu.problem.domain;
+
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,11 +17,10 @@ import java.util.List;
 @AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 @Accessors(chain = true)
-@TableName(autoResultMap = true)
-public class Role {
-    @TableId(type= IdType.AUTO)
+public class ProblemList {
     private Long id;
-    private String roleName;
-    //@TableField(typeHandler = JacksonTypeHandler.class)
-    //private List<String> privileges;
+    private String name;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<?> problems;
+    private Integer star;
 }
