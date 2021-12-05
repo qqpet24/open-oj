@@ -8,4 +8,5 @@ import com.xmu.problem.domain.ProblemList;
  * @see <a href=""></a><br/>
  */
 public interface ProblemListService extends IService<ProblemList> {
+    Object getProblemList();
 }

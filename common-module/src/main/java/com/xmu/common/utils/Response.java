@@ -19,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 @Accessors(chain = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Response<T>{
-    private int code;
+    private int status;
     private String msg;
     private T data;
 
@@ -28,14 +28,14 @@ public class Response<T>{
     }
 
     public static Response<?> of(int code,String msg){
-        return new Response<>().setCode(code).setMsg(msg);
+        return new Response<>().setStatus(code).setMsg(msg);
     }
 
     public static Response<?> of(ResponseCode responseCode){
-        return new Response<>().setCode(responseCode.getCode()).setMsg(responseCode.getMsg());
+        return new Response<>().setStatus(responseCode.getCode()).setMsg(responseCode.getMsg());
     }
 
     public static Response<?> of(ResponseCode responseCode,Object data){
-        return new Response<>().setCode(responseCode.getCode()).setMsg(responseCode.getMsg()).setData(data);
+        return new Response<>().setStatus(responseCode.getCode()).setMsg(responseCode.getMsg()).setData(data);
     }
 }

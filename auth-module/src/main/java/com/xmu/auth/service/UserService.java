@@ -21,4 +21,7 @@ public interface UserService extends IService<User>{
     Object getInfo(Long userId);
 
     Object modifyUserInfo(Long userId, UserProfileVo userProfileVo);
+
+    Object userExist(String username);
+
 }

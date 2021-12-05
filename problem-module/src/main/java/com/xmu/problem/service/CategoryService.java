@@ -8,4 +8,5 @@ import com.xmu.problem.domain.Category;
  * @see <a href=""></a><br/>
  */
 public interface CategoryService extends IService<Category> {
+    Object getCategories();
 }

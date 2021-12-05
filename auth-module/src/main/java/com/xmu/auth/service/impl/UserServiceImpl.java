@@ -11,12 +11,11 @@ import com.xmu.auth.request.UserProfileVo;
 import com.xmu.auth.request.UserVo;
 import com.xmu.auth.service.UserProfileService;
 import com.xmu.auth.service.UserService;
+import com.xmu.common.enums.ResponseCode;
+import com.xmu.common.enums.Role;
 import com.xmu.common.utils.IpUtil;
 import com.xmu.common.utils.Jwt;
 import com.xmu.common.utils.Response;
-import com.xmu.common.enums.Defunct;
-import com.xmu.common.enums.ResponseCode;
-import com.xmu.common.enums.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,7 +26,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import static org.springframework.http.HttpStatus.*;
@@ -73,7 +72,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (userDetails != null) {
             User user = getById(userDetails.getId())
                     .setIp(IpUtil.getIpAddress(request))
-                    .setAccessTime(new Date());
+                    .setAccessTime(LocalDateTime.now());
             if (!updateById(user)) {
                 return Response.of(ResponseCode.INTERNAL_SERVER_ERROR).entity(INTERNAL_SERVER_ERROR);
             }
@@ -105,9 +104,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = userVo.User()
                 .setPassword(encoder.encode(rawPass))
                 .setNickname(username)
-                .setRegisterTime(new Date())
-                .setAccessTime(new Date())
-                .setDefunct(Defunct.NOT_DEFUNCT.getCode())
+                .setRegisterTime(LocalDateTime.now())
+                .setAccessTime(LocalDateTime.now())
+                //.setDefunct(Defunct.NOT_DEFUNCT.getCode())
                 .setRoleId(Role.USER.getRoleId())
                 .setIp(userIp);
         if (save(user)) {
@@ -184,6 +183,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         } catch (Exception e) {
             return Response.of(ResponseCode.INTERNAL_SERVER_ERROR).entity(INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public Object userExist(String username) {
+        if(this.getOne(Wrappers.<User>lambdaQuery().eq(User::getUsername,username))!=null){
+            return Response.of(ResponseCode.OK,true).entity(OK);
+        }
+        return Response.of(ResponseCode.OK,false).entity(OK);
     }
 
 }

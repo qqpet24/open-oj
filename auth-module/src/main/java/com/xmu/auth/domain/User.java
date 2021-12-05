@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -23,11 +24,17 @@ public class User {
     private String username;
     private String password;
     private String nickname;
-    private Integer defunct;
+    //private Integer defunct;
     private String ip;
-    private Date registerTime;
-    private Date accessTime;
+    private LocalDateTime registerTime;
+    private LocalDateTime accessTime;
     private Long roleId;
+    private String email;
+    private Integer submit;
+    private Integer solved;
+    private String school;
+    private Integer score;
+    private String avatar;
 }
 
 

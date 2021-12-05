@@ -6,6 +6,8 @@ spring:
 
 mybatis-plus:
   map-undersccore-to-camel-case: true
+#  configuration:
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 fdfs:
   so-timeout: 1501
   connect-timeout: 601

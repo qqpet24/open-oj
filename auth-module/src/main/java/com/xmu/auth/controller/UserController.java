@@ -41,6 +41,13 @@ public class UserController {
         return userService.register(userVo, request);
     }
 
+    @GetMapping("/exist")
+    @ApiOperation("检查用户是否存在")
+    public Object userExist(@RequestParam String username){
+        return userService.userExist(username);
+    }
+
+
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PutMapping("/{id}/role")
     @ApiOperation("修改用户角色")

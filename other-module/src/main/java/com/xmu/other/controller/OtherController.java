@@ -14,6 +14,6 @@ public class OtherController {
 
     @GetMapping("/test")
     public Object test(){
-        return null;
+        return "test";
     }
 }
