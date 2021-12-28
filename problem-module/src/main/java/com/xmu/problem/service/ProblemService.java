@@ -9,4 +9,7 @@ import com.xmu.problem.domain.Problem;
  */
 public interface ProblemService extends IService<Problem> {
     Object getProblems();
+
+    Object getProblem(Long id);
+
 }

@@ -19,7 +19,7 @@ public class ProblemController {
     @GetMapping("/{id}")
     @ApiOperation("获取题目详情")
     public Object getProblem(@PathVariable Long id){
-        return null;
+        return problemService.getProblem(id);
     }
 
     @PostMapping

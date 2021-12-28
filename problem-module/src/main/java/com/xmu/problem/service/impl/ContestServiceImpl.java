@@ -1,12 +1,20 @@
 package com.xmu.problem.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xmu.common.enums.ResponseCode;
+import com.xmu.common.utils.Response;
 import com.xmu.problem.domain.Contest;
 import com.xmu.problem.mapper.ContestMapper;
+import com.xmu.problem.reponse.ContestBriefInfoDTO;
+import com.xmu.problem.request.ContestDTO;
 import com.xmu.problem.service.ContestService;
+import org.springframework.beans.BeanUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author summer
@@ -17,17 +25,59 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> impl
     @Override
     public Object getContests() {
         List<Contest> contests = this.list();
-        return contests;
+        List<ContestBriefInfoDTO> contestBriefInfoDTOS = contests.stream().map(Contest::brief).toList();
+        return Response.of(ResponseCode.OK, contestBriefInfoDTOS);
     }
 
     @Override
     public Object getContestInfo(Long id) {
-        return null;
+        return Response.of(ResponseCode.OK, this.getById(id));
     }
 
     @Override
     public Object deleteContest(Long id) {
-        return null;
+        Contest contest;
+        if ((contest = this.getById(id)) == null) {
+            return Response.of(ResponseCode.NOT_FOUND);
+        }
+        if(this.removeById(contest)){
+            return Response.of(ResponseCode.OK);
+        }
+        return Response.of(ResponseCode.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public Object createOrModifyContest(Contest contest) {
+        if(contest==null){
+            return Response.of(ResponseCode.BAD_REQUEST);
+        }
+        String title = contest.getTitle();
+        Contest contestTemp = this.getOne(Wrappers.<Contest>lambdaQuery().eq(Contest::getTitle, title));
+        if(contestTemp==null){
+            if(this.save(contest)){
+                return Response.of(ResponseCode.OK);
+            }else {
+                return Response.of(ResponseCode.INTERNAL_SERVER_ERROR);
+            }
+        }
+        BeanUtils.copyProperties(contest,contestTemp);
+        if(this.updateById(contestTemp)){
+            return Response.of(ResponseCode.OK);
+        }
+        return Response.of(ResponseCode.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public Object getProblemsFromContest(Long id) {
+        Contest contest;
+        if((contest=this.getById(id))==null){
+            return Response.of(ResponseCode.NOT_FOUND).entity(HttpStatus.NOT_FOUND);
+        }
+        List<?> problems;
+        if((problems=contest.getProblems())==null){
+            return Response.of(ResponseCode.NOT_FOUND).entity(HttpStatus.NOT_FOUND);
+        }
+        return Response.of(ResponseCode.OK,problems).entity(HttpStatus.OK);
     }
 
 

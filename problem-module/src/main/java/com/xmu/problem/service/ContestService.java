@@ -13,4 +13,8 @@ public interface ContestService extends IService<Contest> {
     Object getContestInfo(Long id);
 
     Object deleteContest(Long id);
+
+    Object createOrModifyContest(Contest contest);
+
+    Object getProblemsFromContest(Long id);
 }

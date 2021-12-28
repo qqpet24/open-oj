@@ -27,4 +27,10 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
                 = this.list(Wrappers.lambdaQuery()).stream().map(Problem::brief).toList();
         return Response.of(ResponseCode.OK,problemBriefs);
     }
+
+    @Override
+    public Object getProblem(Long id) {
+        Problem problem = this.getById(id);
+        return null;
+    }
 }

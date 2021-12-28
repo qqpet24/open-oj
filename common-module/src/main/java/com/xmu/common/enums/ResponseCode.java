@@ -5,6 +5,8 @@ package com.xmu.common.enums;
  * @see <a href=""></a><br/>
  */
 public enum ResponseCode {
+    BAD_REQUEST(400,"BAD_REQUEST"),
+    NOT_FOUND(404,"资源不存在"),
     OK(200, "OK"),
     INTERNAL_SERVER_ERROR(500, "INTERNAL_SERVER_ERROR"),
     USERNAME_OR_PASSWORD_ERROR(501, "用户名或密码错误"),

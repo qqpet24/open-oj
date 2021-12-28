@@ -1,14 +1,11 @@
-package com.xmu.problem.domain;
+package com.xmu.problem.request;
 
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.xmu.problem.reponse.ContestBriefInfoDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,8 +18,7 @@ import java.util.List;
 @AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 @Accessors(chain = true)
-@TableName(autoResultMap = true)
-public class Contest {
+public class ContestDTO {
     private Long id;
     private String title;
     private LocalDateTime startTime;
@@ -34,10 +30,4 @@ public class Contest {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<?> problems;
     private Long userId;
-
-    public ContestBriefInfoDTO brief(){
-        ContestBriefInfoDTO contestBriefInfoDTO = new ContestBriefInfoDTO();
-        BeanUtils.copyProperties(this,contestBriefInfoDTO);
-        return contestBriefInfoDTO;
-    }
 }
