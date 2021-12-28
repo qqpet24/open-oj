@@ -1,15 +1,13 @@
-package com.xmu.problem.domain;
+package com.xmu.problem.request;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -20,9 +18,7 @@ import java.util.List;
 @AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 @Accessors(chain = true)
-@TableName(autoResultMap = true)
-public class ProblemList {
-    @TableId(type = IdType.AUTO)
+public class ProblemListDTO{
     private Long id;
     private String name;
     @TableField(typeHandler = JacksonTypeHandler.class)

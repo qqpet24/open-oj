@@ -2,6 +2,7 @@ package com.xmu.problem.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xmu.problem.domain.Problem;
+import com.xmu.problem.request.ProblemDTO;
 
 /**
  * @author summer
@@ -12,4 +13,7 @@ public interface ProblemService extends IService<Problem> {
 
     Object getProblem(Long id);
 
+    Object deleteProblem(Long id);
+
+    Object createOrModifyProblem(ProblemDTO problem);
 }

@@ -69,7 +69,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/v3/**",
                         "/doc.html")
                 .permitAll()
-                .antMatchers("/*/*")
+                .antMatchers("/**/**")
                 .permitAll()
                 .anyRequest()
                 .authenticated();

@@ -1,5 +1,6 @@
 package com.xmu.problem.controller;
 
+import com.xmu.problem.request.ProblemDTO;
 import com.xmu.problem.service.ProblemService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,14 +25,15 @@ public class ProblemController {
 
     @PostMapping
     @ApiOperation("创建或修改题目")
-    public Object createOrModifyProblem(){
-        return null;
+    public Object createOrModifyProblem(@RequestBody ProblemDTO problem){
+        return problemService.createOrModifyProblem(problem);
     }
+
 
     @DeleteMapping("/{id}")
     @ApiOperation("删除题目")
     public Object deleteProblem(@PathVariable Long id){
-        return null;
+        return problemService.deleteProblem(id);
     }
 
     @GetMapping("/all")

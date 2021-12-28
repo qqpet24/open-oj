@@ -1,5 +1,6 @@
 package com.xmu.problem.controller;
 
+import com.xmu.problem.request.ProblemListDTO;
 import com.xmu.problem.service.ProblemListService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,25 +25,18 @@ public class ProblemListController {
     @GetMapping("/{id}")
     @ApiOperation("获取题单基础信息")
     public Object getListInfo(@PathVariable Long id){
-        return null;
+        return problemListService.getListInfo(id);
     }
 
     @PostMapping
     @ApiOperation("创建或修改一个题单")
-    public Object createOrModifyProblemList(){
-        return null;
+    public Object createOrModifyProblemList(@RequestBody ProblemListDTO problemListDTO){
+        return problemListService.createOrModifyProblemList(problemListDTO);
     }
 
     @DeleteMapping("/{id}")
     @ApiOperation("删除某个题单")
     public Object deleteProblemList(@PathVariable Long id){
-        return null;
+        return problemListService.deleteProblemList(id);
     }
-
-    @GetMapping("/{id}/problems")
-    @ApiOperation("获取题单中的所有题目")
-    public Object getProblemsByList(@PathVariable Long id){
-        return null;
-    }
-
 }
