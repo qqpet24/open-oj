@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @see <a href=""></a><br/>
  */
 @RestController
-@RequestMapping("/problem")
+@RequestMapping("/list")
 public class ProblemListController {
 
     @Autowired

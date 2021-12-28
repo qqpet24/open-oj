@@ -8,4 +8,9 @@ import com.xmu.problem.domain.Contest;
  * @see <a href=""></a><br/>
  */
 public interface ContestService extends IService<Contest> {
+    Object getContests();
+
+    Object getContestInfo(Long id);
+
+    Object deleteContest(Long id);
 }

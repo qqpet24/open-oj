@@ -24,4 +24,5 @@ public interface UserService extends IService<User>{
 
     Object userExist(String username);
 
+    Object getAvatarByUserId(Long id);
 }

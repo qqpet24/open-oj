@@ -1,6 +1,8 @@
 package com.xmu.problem.controller;
 
+import com.xmu.problem.service.ContestService;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -11,16 +13,19 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/contest")
 public class ContestController {
 
+    @Autowired
+    private ContestService contestService;
+
     @GetMapping("/all")
     @ApiOperation("获取全部竞赛")
     public Object getContests(){
-        return null;
+        return contestService.getContests();
     }
 
     @GetMapping("/contest/{id}")
     @ApiOperation("获取竞赛基础信息")
     public Object getContestInfo(@PathVariable Long id){
-        return null;
+        return contestService.getContestInfo(id);
     }
 
     @PostMapping("/contest")
@@ -29,10 +34,10 @@ public class ContestController {
         return null;
     }
 
-    @DeleteMapping("/contest/{id}")
+    @DeleteMapping("/contest/{id}}")
     @ApiOperation("删除某个竞赛")
     public Object deleteContest(@PathVariable Long id){
-        return null;
+        return contestService.deleteContest(id);
     }
 
     @GetMapping("/contest/{id}/problems")

@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -191,6 +192,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return Response.of(ResponseCode.OK,true).entity(OK);
         }
         return Response.of(ResponseCode.OK,false).entity(OK);
+    }
+
+    @Override
+    public Object getAvatarByUserId(Long id) {
+        String avatarUrl = this.getById(id).getAvatar();
+        return Response.of(ResponseCode.OK,
+                Map.of("avatarUrl", Objects.requireNonNullElse(avatarUrl, "https://joeschmoe.io/api/v1/random"))).entity(OK);
     }
 
 }

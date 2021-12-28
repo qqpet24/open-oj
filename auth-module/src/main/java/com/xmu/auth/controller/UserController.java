@@ -31,7 +31,7 @@ public class UserController {
 
     @PostMapping("logout")
     @ApiOperation("登出")
-    public Object logout(UserVo user) {
+    public Object logout(@RequestParam Long userId) {
         return null;
     }
 
@@ -43,7 +43,7 @@ public class UserController {
 
     @GetMapping("/exist")
     @ApiOperation("检查用户是否存在")
-    public Object userExist(@RequestParam String username){
+    public Object userExist(@RequestParam String username) {
         return userService.userExist(username);
     }
 
@@ -71,5 +71,11 @@ public class UserController {
         return userService.modifyUserInfo(id, userProfileVo);
     }
 
+    //有注解一定校验token
+    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
+    @GetMapping("/{id}/avatar")
+    public Object getAvatarByUserId(@PathVariable Long id) {
+        return userService.getAvatarByUserId(id);
+    }
 
 }
