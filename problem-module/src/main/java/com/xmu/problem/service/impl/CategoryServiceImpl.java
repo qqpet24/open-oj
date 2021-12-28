@@ -22,6 +22,6 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Override
     public Object getCategories() {
         List<Category> list = this.list(Wrappers.lambdaQuery());
-        return Response.of(ResponseCode.OK, list).entity(OK);
+        return Response.of(ResponseCode.OK, list);
     }
 }
