@@ -14,12 +14,13 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @Accessors(chain = true)
 public class ContestBriefInfoDTO {
-
     private Long id;
     private String title;
     private String description;
     private String startTime;
     private String endTime;
-    private Integer continuousTime;
+    private String continuousTime;
     private Long userId;
+    private String creator;
+    private String avatar;
 }
