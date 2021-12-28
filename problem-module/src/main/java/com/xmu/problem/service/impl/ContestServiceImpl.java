@@ -1,8 +1,12 @@
 package com.xmu.problem.service.impl;
 
+import cn.hutool.Hutool;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xmu.auth.domain.User;
+import com.xmu.auth.service.UserService;
 import com.xmu.common.enums.ResponseCode;
+import com.xmu.common.utils.DateTimeUtil;
 import com.xmu.common.utils.Response;
 import com.xmu.problem.domain.Contest;
 import com.xmu.problem.mapper.ContestMapper;
@@ -10,6 +14,7 @@ import com.xmu.problem.reponse.ContestBriefInfoDTO;
 import com.xmu.problem.request.ContestDTO;
 import com.xmu.problem.service.ContestService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -22,11 +27,32 @@ import java.util.Map;
  */
 @Service
 public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> implements ContestService {
+
+    @Autowired
+    private UserService userService;
+
     @Override
     public Object getContests() {
-        List<Contest> contests = this.list();
-        List<ContestBriefInfoDTO> contestBriefInfoDTOS = contests.stream().map(Contest::brief).toList();
+        List<Contest> contests = this.list(Wrappers.lambdaQuery());
+        List<ContestBriefInfoDTO> contestBriefInfoDTOS = contests.stream().map(contest -> {
+            ContestBriefInfoDTO contestBriefInfoDTO = new ContestBriefInfoDTO();
+            BeanUtils.copyProperties(contest, contestBriefInfoDTO);
+            return brief(contest, contestBriefInfoDTO);
+        }).toList();
+
         return Response.of(ResponseCode.OK, contestBriefInfoDTOS);
+    }
+
+    private ContestBriefInfoDTO brief(Contest contest, ContestBriefInfoDTO contestBriefInfoDTO) {
+        Long userId = contest.getUserId();
+        User user = userService.getById(userId);
+        contestBriefInfoDTO.setAvatar(user.getAvatar());
+        contestBriefInfoDTO.setCreator(user.getUsername());
+        contestBriefInfoDTO.setUserId(userId);
+        contestBriefInfoDTO.setContinuousTime(DateTimeUtil.between(contest.getEndTime(), contest.getStartTime()));
+        contestBriefInfoDTO.setStartTime(contest.getStartTime().toString());
+        contestBriefInfoDTO.setEndTime(contest.getEndTime().toString());
+        return contestBriefInfoDTO;
     }
 
     @Override
@@ -40,7 +66,7 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> impl
         if ((contest = this.getById(id)) == null) {
             return Response.of(ResponseCode.NOT_FOUND);
         }
-        if(this.removeById(contest)){
+        if (this.removeById(contest)) {
             return Response.of(ResponseCode.OK);
         }
         return Response.of(ResponseCode.INTERNAL_SERVER_ERROR);
@@ -48,20 +74,20 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> impl
 
     @Override
     public Object createOrModifyContest(Contest contest) {
-        if(contest==null){
+        if (contest == null) {
             return Response.of(ResponseCode.BAD_REQUEST);
         }
         String title = contest.getTitle();
         Contest contestTemp = this.getOne(Wrappers.<Contest>lambdaQuery().eq(Contest::getTitle, title));
-        if(contestTemp==null){
-            if(this.save(contest)){
+        if (contestTemp == null) {
+            if (this.save(contest)) {
                 return Response.of(ResponseCode.OK);
-            }else {
+            } else {
                 return Response.of(ResponseCode.INTERNAL_SERVER_ERROR);
             }
         }
-        BeanUtils.copyProperties(contest,contestTemp);
-        if(this.updateById(contestTemp)){
+        BeanUtils.copyProperties(contest, contestTemp);
+        if (this.updateById(contestTemp)) {
             return Response.of(ResponseCode.OK);
         }
         return Response.of(ResponseCode.INTERNAL_SERVER_ERROR);
@@ -70,14 +96,14 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> impl
     @Override
     public Object getProblemsFromContest(Long id) {
         Contest contest;
-        if((contest=this.getById(id))==null){
+        if ((contest = this.getById(id)) == null) {
             return Response.of(ResponseCode.NOT_FOUND).entity(HttpStatus.NOT_FOUND);
         }
         List<?> problems;
-        if((problems=contest.getProblems())==null){
+        if ((problems = contest.getProblems()) == null) {
             return Response.of(ResponseCode.NOT_FOUND).entity(HttpStatus.NOT_FOUND);
         }
-        return Response.of(ResponseCode.OK,problems).entity(HttpStatus.OK);
+        return Response.of(ResponseCode.OK, problems).entity(HttpStatus.OK);
     }
 
 
