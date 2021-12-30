@@ -12,6 +12,7 @@ import com.xmu.problem.service.ProblemService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,41 +27,25 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
     public Object getProblems() {
         List<ProblemBriefDTO> problemBriefs
                 = this.list(Wrappers.lambdaQuery()).stream().map(Problem::brief).toList();
-        return Response.of(ResponseCode.OK,problemBriefs);
+        return problemBriefs.isEmpty() ? Response.of(ResponseCode.NOT_FOUND) : Response.of(ResponseCode.OK, problemBriefs);
     }
 
     @Override
     public Object getProblem(Long id) {
         Problem problem = this.getById(id);
-        if(problem!=null){
-            com.xmu.problem.reponse.ProblemDTO problemDTO = new com.xmu.problem.reponse.ProblemDTO();
-            BeanUtils.copyProperties(problem,problemDTO);
-            problemDTO.setInDate(problem.getInDate().toString());
-            return Response.of(ResponseCode.OK,problemDTO);
-        }else{
-            return Response.of(ResponseCode.PROBLEM_NOT_EXIST);
-        }
+        return problem != null ? Response.of(ResponseCode.OK, problem) : Response.of(ResponseCode.PROBLEM_NOT_EXIST);
     }
 
     @Override
     public Object deleteProblem(Long id) {
         boolean result = this.removeById(id);
-        if(result){
-            return Response.of(ResponseCode.OK);
-        }else{
-            return Response.of(ResponseCode.PROBLEM_NOT_EXIST);
-        }
+        return result ? Response.of(ResponseCode.OK) : Response.of(ResponseCode.PROBLEM_NOT_EXIST);
     }
 
     @Override
     public Object createOrModifyProblem(ProblemDTO problem) {
         Problem problem1 = new Problem(problem);
-        boolean result = this.saveOrUpdate(problem1);
-
-        if(result){
-            return Response.of(ResponseCode.OK);
-        }else{
-            return Response.of(ResponseCode.INTERNAL_SERVER_ERROR);
-        }
+        problem.setInDate(LocalDateTime.now());
+        return this.saveOrUpdate(problem1) ? Response.of(ResponseCode.OK) : Response.of(ResponseCode.INTERNAL_SERVER_ERROR);
     }
 }

@@ -1,5 +1,6 @@
 package com.xmu.other.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,5 +24,6 @@ public class Message {
     private String title;
     private String content;
     private Integer reply;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime inDate;
 }
