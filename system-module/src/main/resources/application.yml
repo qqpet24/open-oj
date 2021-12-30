@@ -3,11 +3,21 @@ spring:
     url: jdbc:mysql://101.37.20.199:3306/online-judge
     username: remote
     password: 123456
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: 2256788742@qq.com
+    password: dpqdeylkbudtecgb
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
 
 mybatis-plus:
   map-undersccore-to-camel-case: true
-#  configuration:
-#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 fdfs:
   so-timeout: 1501
   connect-timeout: 601
