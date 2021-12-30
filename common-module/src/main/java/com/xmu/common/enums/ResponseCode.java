@@ -17,11 +17,12 @@ public enum ResponseCode {
     PROBLEM_NOT_EXIST(506,"题目不存在"),
     ANNOUNCEMENT_NOT_EXIST(507,"公告不存在"),
     NOT_INITIAL_COMMENT_USER(508,"修改评论的用户和最初发表评论的用户不一致"),
-    COMMON_NOT_EXIST(509,"评论不存在"),
+    COMMENT_NOT_EXIST(509,"评论不存在"),
     AUTHORIZATION_TOKEN_NOT_EXIST(510,"缺少token"),
     COMMENT_FROZEN(511,"评论已经被冻结"),
     NEW_REPLY_SHOULD_NOT_INCLUDE_ID(512,"新增评论不应该含有评论ID"),
-    NOT_ADMIN(513,"不是管理员");
+    NOT_ADMIN(513,"不是管理员"),
+    PROBLEM_NOT_MATCH(514,"传入参数问题与原问题不匹配");
     private final int code;
     private final String msg;
 

@@ -30,18 +30,19 @@ public class DiscussionController {
 
     @GetMapping("/{problemId}")
     @ApiOperation("获取某个问题下的评论")
-    public Object getCommentsByProblemId(@PathVariable Long problemId){
-        return replyService.getCommentsByProblemId(problemId);
+    public Object getCommentsByProblemId(@PathVariable Long problemId,@RequestParam(required = false) Long detail){
+        return replyService.getCommentsByProblemId(problemId,detail);
     }
+
     @GetMapping("/detail/{problemId}")
     @ApiOperation("获取某个问题下的详细评论(仅管理员)")
-    public Object getDetailCommentsByProblemId(@PathVariable Long problemId,HttpServletRequest httpRequest){
+    public Object getDetailCommentsByProblemId(@PathVariable Long problemId,@RequestParam(required = false) Long detail, HttpServletRequest httpRequest){
         String token = httpRequest.getHeader("Authorization");
         if(token == null){
             Response.of(ResponseCode.AUTHORIZATION_TOKEN_NOT_EXIST);
         }
         Long userId = Jwt.getUserIdFromToken(token);
-        return replyService.getDetailCommentsByProblemId(problemId,userId);
+        return replyService.getDetailCommentsByProblemId(problemId,userId,detail);
     }
 
     @PostMapping("/{problemId}")

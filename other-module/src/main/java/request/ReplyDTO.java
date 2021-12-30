@@ -23,5 +23,6 @@ public class ReplyDTO {
     private String text;
     private Integer status;//前端非管理员无需传入
     private String ip;//前端无需传入
-    private Long problemId;//前端在path中传入，此处无需传入
+    private Long problemId;//前端在path中传入，此处无需传入;
+    private Long detail;//null，也就是不传是一个问题下的回复（评论） 如果不是，比如说是5，就是对id为5的comment进行评论（评论的评论）
 }

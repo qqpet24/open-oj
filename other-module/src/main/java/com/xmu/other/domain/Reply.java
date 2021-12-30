@@ -29,6 +29,7 @@ public class Reply {
     private Integer status;
     private String ip;
     private Long problemId;
+    private Long detail;
     public ReplyBriefDTO toReplyBriefDTO(){
         ReplyBriefDTO replyDTO = new ReplyBriefDTO();
         BeanUtils.copyProperties(this,replyDTO);

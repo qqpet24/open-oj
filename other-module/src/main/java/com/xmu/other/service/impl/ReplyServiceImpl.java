@@ -45,8 +45,10 @@ public class ReplyServiceImpl extends ServiceImpl<ReplyMapper, Reply> implements
         }
 
         Reply reply = this.getById(replyDTO.getId());
+
         if(reply!=null){
             Long roleId = user.getRoleId();
+            Long originalDetail = reply.getDetail();
             if(roleId!=1){//如果不是管理员
                 replyDTO.setStatus(null);
                 if(reply.getStatus().compareTo(0)!=0){//评论冻结
@@ -57,22 +59,39 @@ public class ReplyServiceImpl extends ServiceImpl<ReplyMapper, Reply> implements
                 if(!Objects.equals(replyDTO.getUserId(), reply.getUserId())){//如果修改的不是自己的评论
                     return Response.of(ResponseCode.NOT_INITIAL_COMMENT_USER);
                 }
+
+                Long originalProblemId = reply.getProblemId();
                 BeanUtils.copyProperties(replyDTO,reply);
+                reply.setDetail(originalDetail);
+                reply.setProblemId(originalProblemId);
             }else{//如果是管理员，管理员修改评论不应该改变原来发表评论的用户ID、时间、IP
                 Long originalUserId = reply.getUserId();
                 LocalDateTime originalTime = reply.getTime();
                 String originalIp = reply.getIp();
+                Long originalProblemId = reply.getProblemId();
 
                 BeanUtils.copyProperties(replyDTO,reply);
 
                 reply.setUserId(originalUserId);
                 reply.setIp(originalIp);
                 reply.setTime(originalTime);
+                reply.setDetail(originalDetail);
+                reply.setProblemId(originalProblemId);
             }
         }else{
             reply = new Reply();
+            if(replyDTO.getDetail()!=null){//如果是对一个问题评论的评论
+                Reply topicReply = this.getById(replyDTO.getDetail());
+                if(topicReply==null){
+                    return Response.of(ResponseCode.COMMENT_NOT_EXIST);
+                }
+                if(topicReply.getProblemId().compareTo(replyDTO.getProblemId())!=0){
+                    return Response.of(ResponseCode.PROBLEM_NOT_MATCH);
+                }
+            }
             BeanUtils.copyProperties(replyDTO,reply);
             reply.setId(null);
+            reply.setStatus(0);
         }
 
         boolean result = this.saveOrUpdate(reply);
@@ -89,35 +108,57 @@ public class ReplyServiceImpl extends ServiceImpl<ReplyMapper, Reply> implements
         Reply reply = this.getById(commentId);
         Long roleId = userService.getById(userId).getRoleId();
 
-        if(roleId!=1 && reply != null){//如果不是管理员且删除的不是自己的评论
+        if(reply==null){
+            return Response.of(ResponseCode.COMMENT_NOT_EXIST);
+        }
+
+        if(roleId!=1){//如果不是管理员且删除的不是自己的评论
             if(!Objects.equals(reply.getUserId(), userId)){
                 return Response.of(ResponseCode.NOT_INITIAL_COMMENT_USER);
             }
-            if(reply.getStatus().compareTo(1)==0){//已经被冻结评论不能修改
+            if(reply.getStatus().compareTo(1)==0){//已经被冻结评论不能删除
                 return Response.of(ResponseCode.COMMENT_FROZEN);
             }
         }
 
-        boolean result = this.removeById(commentId);
+        boolean result = false;
+
+        if(reply.getDetail()==null){//删除一条评论后，评论的评论都要被删除
+            QueryWrapper<Reply> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("detail",reply.getId());
+            List<Reply> replyList = this.list(queryWrapper);
+            replyList.add(reply);
+            List<Long> replyIdList = replyList.stream().map(Reply::getId).toList();
+            result = this.removeByIds(replyIdList);
+        }else{
+            result = this.removeById(commentId);
+        }
+
         if(result){
             return Response.of(ResponseCode.OK);
         }else{
-            return Response.of(ResponseCode.COMMON_NOT_EXIST);
+            return Response.of(ResponseCode.COMMENT_NOT_EXIST);
         }
     }
 
     @Override
-    public Object getCommentsByProblemId(Long problemId) {
+    public Object getCommentsByProblemId(Long problemId, Long detail) {//已经冻结的评论普通用户不能获取
         QueryWrapper<Reply> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("problem_id",problemId);
         queryWrapper.eq("status",0);
+        if(detail==null){
+            queryWrapper.isNull("detail");
+        }else{
+            queryWrapper.eq("detail",detail);
+        }
+
         List<Reply> replyList = this.list(queryWrapper);
         List<ReplyBriefDTO> replyDTOList = replyList.stream().map(Reply::toReplyBriefDTO).toList();
         return Response.of(ResponseCode.OK,replyDTOList);
     }
 
     @Override
-    public Object getDetailCommentsByProblemId(Long problemId, Long userId) {
+    public Object getDetailCommentsByProblemId(Long problemId, Long userId, Long detail) {
         User user = userService.getById(userId);
         if(user == null){//校验用户是否存在
             return Response.of(ResponseCode.USER_NOT_EXIST);
@@ -127,7 +168,11 @@ public class ReplyServiceImpl extends ServiceImpl<ReplyMapper, Reply> implements
         }
         QueryWrapper<Reply> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("problem_id",problemId);
-        queryWrapper.eq("status",0);
+        if(detail==null){
+            queryWrapper.isNull("detail");
+        }else{
+            queryWrapper.eq("detail",detail);
+        }
         List<Reply> replyList = this.list(queryWrapper);
         List<ReplyDetailDTO> replyDTOList = replyList.stream().map(Reply::toReplyDetailDTO).toList();
         return Response.of(ResponseCode.OK,replyDTOList);

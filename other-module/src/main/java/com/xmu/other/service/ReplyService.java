@@ -2,6 +2,7 @@ package com.xmu.other.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xmu.other.domain.Reply;
+import io.swagger.models.auth.In;
 import org.apache.ibatis.annotations.Mapper;
 import request.ReplyDTO;
 
@@ -15,7 +16,7 @@ public interface ReplyService extends IService<Reply> {
 
     Object deleteComment(Long commentId, Long userId);
 
-    Object getCommentsByProblemId(Long problemId);
+    Object getCommentsByProblemId(Long problemId, Long detail);
 
-    Object getDetailCommentsByProblemId(Long problemId, Long userId);
+    Object getDetailCommentsByProblemId(Long problemId, Long userId, Long detail);
 }
