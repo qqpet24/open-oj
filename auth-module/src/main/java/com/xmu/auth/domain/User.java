@@ -2,10 +2,12 @@ package com.xmu.auth.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.xmu.auth.response.UserProfileDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -35,6 +37,12 @@ public class User {
     private String school;
     private Integer score;
     private String avatar;
+
+    public UserProfileDTO profile(){
+        UserProfileDTO userProfileDTO = new UserProfileDTO();
+        BeanUtils.copyProperties(this,userProfileDTO);
+        return userProfileDTO;
+    }
 }
 
 

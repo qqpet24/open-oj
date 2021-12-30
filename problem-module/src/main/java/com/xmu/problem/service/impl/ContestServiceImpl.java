@@ -1,6 +1,5 @@
 package com.xmu.problem.service.impl;
 
-import cn.hutool.Hutool;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xmu.auth.domain.User;
@@ -11,7 +10,6 @@ import com.xmu.common.utils.Response;
 import com.xmu.problem.domain.Contest;
 import com.xmu.problem.mapper.ContestMapper;
 import com.xmu.problem.reponse.ContestBriefInfoDTO;
-import com.xmu.problem.request.ContestDTO;
 import com.xmu.problem.service.ContestService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author summer
@@ -57,7 +54,9 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> impl
 
     @Override
     public Object getContestInfo(Long id) {
-        return Response.of(ResponseCode.OK, this.getById(id));
+        Contest contest = this.getById(id);
+        User creator = userService.getById(contest.getUserId());
+        return Response.of(ResponseCode.OK, contest.detail(creator.getUsername()));
     }
 
     @Override

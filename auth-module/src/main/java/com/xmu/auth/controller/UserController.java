@@ -5,7 +5,6 @@ import com.xmu.auth.request.UserVo;
 import com.xmu.auth.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -48,14 +47,14 @@ public class UserController {
     }
 
 
-    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    //@PreAuthorize("hasAnyAuthority('ADMIN')")
     @PutMapping("/{id}/role")
     @ApiOperation("修改用户角色")
     public Object modifyRoleOfUser(@PathVariable Long id) {
         return userService.modifyRoleOfUser(id);
     }
 
-    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
+    //@PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @GetMapping("/{id}/info")
     @ApiOperation("获取用户信息")
     public Object getInfo(@PathVariable Long id) {
@@ -63,7 +62,7 @@ public class UserController {
         return userService.getInfo(id);
     }
 
-    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
+    //@PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @PostMapping("/{id}/info")
     @ApiOperation("修改用户信息")
     public Object modifyUserInfo(@PathVariable Long id, @RequestBody UserProfileVo userProfileVo) {
@@ -72,7 +71,7 @@ public class UserController {
     }
 
     //有注解一定校验token
-    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
+    //@PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @GetMapping("/{id}/avatar")
     public Object getAvatarByUserId(@PathVariable Long id) {
         return userService.getAvatarByUserId(id);

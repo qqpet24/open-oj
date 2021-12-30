@@ -1,7 +1,6 @@
 package com.xmu.problem.controller;
 
 import com.xmu.problem.domain.Contest;
-import com.xmu.problem.request.ContestDTO;
 import com.xmu.problem.service.ContestService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,31 +23,31 @@ public class ContestController {
         return contestService.getContests();
     }
 
-    @GetMapping("/contest/{id}")
+    @GetMapping("/{id}")
     @ApiOperation("获取竞赛基础信息")
     public Object getContestInfo(@PathVariable Long id){
         return contestService.getContestInfo(id);
     }
 
-    @PostMapping("/contest")
+    @PostMapping
     @ApiOperation("创建或修改一个竞赛")
     public Object createOrModifyContest(@RequestBody Contest contest){
         return contestService.createOrModifyContest(contest);
     }
 
-    @DeleteMapping("/contest/{id}}")
+    @DeleteMapping("/{id}}")
     @ApiOperation("删除某个竞赛")
     public Object deleteContest(@PathVariable Long id){
         return contestService.deleteContest(id);
     }
 
-    @GetMapping("/contest/{id}/problems")
+    @GetMapping("/{id}/problems")
     @ApiOperation("获取竞赛中的所有题目")
     public Object getProblemsFromContest(@PathVariable Long id){
         return contestService.getProblemsFromContest(id);
     }
 
-    @PostMapping("/contest/{id}")
+    @PostMapping("/{id}")
     @ApiOperation("为竞赛新增题目")
     public Object addProblemsToContest(@PathVariable Long id){
         return null;

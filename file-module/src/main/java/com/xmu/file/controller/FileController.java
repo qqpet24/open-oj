@@ -9,11 +9,12 @@ import com.xmu.common.utils.Response;
 import com.xmu.file.domain.File;
 import com.xmu.file.service.FileService;
 import io.swagger.annotations.ApiOperation;
-import nonapi.io.github.classgraph.json.JSONUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -39,7 +40,7 @@ public class FileController {
     @Autowired
     private FileService fileService;
 
-    @PreAuthorize("hasAnyAuthority('ADMIN','USER')")
+    //@PreAuthorize("hasAnyAuthority('ADMIN','USER')")
     @PostMapping("/upload")
     @ApiOperation("file upload")
     public Object upload(@RequestBody  MultipartFile file, HttpServletRequest request) {

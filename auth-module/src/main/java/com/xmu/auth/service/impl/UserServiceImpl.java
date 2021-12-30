@@ -145,16 +145,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public Object getInfo(Long userId) {
-        if (getById(userId) == null) {
+        User user;
+        if ((user=getById(userId)) == null) {
             return Response.of(ResponseCode.USER_NOT_EXIST).entity(BAD_REQUEST);
         }
-        UserProfile userProfile;
-        if ((userProfile = userProfileService.getOne(
-                Wrappers.<UserProfile>lambdaQuery().eq(UserProfile::getUserId, userId)))
-                == null) {
-            return Response.of(ResponseCode.EMPTY_USER_INFO).entity(OK);
-        }
-        return Response.of(ResponseCode.OK, userProfile).entity(OK);
+        return Response.of(ResponseCode.OK, user.profile()).entity(OK);
     }
 
     /**
