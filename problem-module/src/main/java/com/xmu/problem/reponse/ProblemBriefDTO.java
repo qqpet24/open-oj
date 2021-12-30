@@ -20,7 +20,9 @@ public class ProblemBriefDTO {
     private Long id;
     private String title;
     private String description;
-    private Integer difficulty;
+    private String difficulty;
     private List<String> categories;
     private Integer star;
+    private Integer accepted;
+    private Integer submit;
 }

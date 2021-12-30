@@ -2,6 +2,7 @@ package com.xmu.problem.request;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.models.auth.In;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,27 +21,7 @@ import java.util.List;
 @NoArgsConstructor
 @Accessors(chain = true)
 public class ProblemDTO {
-//    private Long id;
-//    private String title;
-//    private String description;
-//    private String input_description;
-//    private String output_description;
-//    private String sample_input;
-//    private String sample_output;
-//    private String source;
-//    private LocalDateTime in_date;
-//    private Double time_limit;
-//    private Integer memory_limit;
-//    private Integer accepted;
-//    private Integer submit;
-//
-//    @TableField(typeHandler = JacksonTypeHandler.class)
-//    private List<?> categories;
-//    @TableField(typeHandler = JacksonTypeHandler.class)
-//    private List<?> lists;
-//
-//    private Integer difficulty;
-//    private Integer star;
+
     private Long id;
     private String title;
     private String description;
@@ -52,12 +33,9 @@ public class ProblemDTO {
     private LocalDateTime inDate;
     private Integer timeLimit;
     private Integer memoryLimit;
-    private Integer accepted;
-    private Integer submit;
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<String> categories;
+    private List<?> categories;
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<?> lists;
     private Integer difficulty;
-    private Integer star;
 }

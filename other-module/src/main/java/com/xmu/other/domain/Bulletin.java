@@ -1,5 +1,6 @@
 package com.xmu.other.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,7 @@ public class Bulletin {
     private Long userId;
     private String title;
     private String content;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime time;
     private Integer importance;
 }

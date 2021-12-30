@@ -42,19 +42,24 @@ public class Problem {
     private Integer accepted;
     private Integer submit;
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<String> categories;
+    private List<?> categories;
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<?> lists;
     private Integer difficulty;
     private Integer star;
 
-    public ProblemBriefDTO brief(){
+    public ProblemBriefDTO brief() {
         ProblemBriefDTO problemBrief = new ProblemBriefDTO();
-        BeanUtils.copyProperties(this,problemBrief);
+        BeanUtils.copyProperties(this, problemBrief);
+        switch (difficulty) {
+            case 0 -> problemBrief.setDifficulty("simple");
+            case 1 -> problemBrief.setDifficulty("medium");
+            case 2 -> problemBrief.setDifficulty("hard");
+        }
         return problemBrief;
     }
 
-    public Problem(ProblemDTO problemDTO){
-        BeanUtils.copyProperties(problemDTO,this);
+    public Problem(ProblemDTO problemDTO) {
+        BeanUtils.copyProperties(problemDTO, this);
     }
 }

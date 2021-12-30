@@ -1,5 +1,6 @@
 package com.xmu.other.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 public class Reply {
     private Long id;
     private Long userId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime time;
     private String text;
     private Integer topicId;
