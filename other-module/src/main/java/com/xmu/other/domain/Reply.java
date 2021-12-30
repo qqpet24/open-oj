@@ -1,9 +1,14 @@
 package com.xmu.other.domain;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.xmu.other.response.ReplyBriefDTO;
+import com.xmu.other.response.ReplyDetailDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDateTime;
 
@@ -16,11 +21,22 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Accessors(chain = true)
 public class Reply {
+    @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
     private LocalDateTime time;
     private String text;
-    private Integer topicId;
     private Integer status;
     private String ip;
+    private Long problemId;
+    public ReplyBriefDTO toReplyBriefDTO(){
+        ReplyBriefDTO replyDTO = new ReplyBriefDTO();
+        BeanUtils.copyProperties(this,replyDTO);
+        return replyDTO;
+    }
+    public ReplyDetailDTO toReplyDetailDTO(){
+        ReplyDetailDTO replyDTO = new ReplyDetailDTO();
+        BeanUtils.copyProperties(this,replyDTO);
+        return replyDTO;
+    }
 }

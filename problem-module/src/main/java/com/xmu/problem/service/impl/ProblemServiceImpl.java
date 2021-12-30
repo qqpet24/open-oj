@@ -33,7 +33,10 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
     public Object getProblem(Long id) {
         Problem problem = this.getById(id);
         if(problem!=null){
-            return Response.of(ResponseCode.OK,problem);
+            com.xmu.problem.reponse.ProblemDTO problemDTO = new com.xmu.problem.reponse.ProblemDTO();
+            BeanUtils.copyProperties(problem,problemDTO);
+            problemDTO.setInDate(problem.getInDate().toString());
+            return Response.of(ResponseCode.OK,problemDTO);
         }else{
             return Response.of(ResponseCode.PROBLEM_NOT_EXIST);
         }
