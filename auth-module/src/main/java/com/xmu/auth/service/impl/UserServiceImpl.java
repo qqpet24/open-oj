@@ -9,6 +9,7 @@ import com.xmu.auth.domain.UserProfile;
 import com.xmu.auth.mapper.UserMapper;
 import com.xmu.auth.request.UserProfileVo;
 import com.xmu.auth.request.UserVo;
+import com.xmu.auth.response.UserBriefDTO;
 import com.xmu.auth.service.UserProfileService;
 import com.xmu.auth.service.UserService;
 import com.xmu.common.enums.ResponseCode;
@@ -27,8 +28,10 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -146,7 +149,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public Object getInfo(Long userId) {
         User user;
-        if ((user=getById(userId)) == null) {
+        if ((user = getById(userId)) == null) {
             return Response.of(ResponseCode.USER_NOT_EXIST).entity(BAD_REQUEST);
         }
         return Response.of(ResponseCode.OK, user.profile()).entity(OK);
@@ -155,38 +158,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /**
      * Create or Modify User Info
      *
-     * @param userId        User Id
-     * @param userProfileVo UserProfileVo
      * @return Ok or Error
      * @see UserProfileVo
      */
     @Override
-    public Object modifyUserInfo(Long userId, UserProfileVo userProfileVo) {
-        if (getById(userId) == null) {
-            return Response.of(ResponseCode.USER_NOT_EXIST).entity(BAD_REQUEST);
-        }
-        UserProfile userProfile = userProfileService.getOne(
-                Wrappers.<UserProfile>lambdaQuery().eq(UserProfile::getUserId, userId));
-        try {
-            if (userProfile == null) {
-                userProfile = userProfileVo.userProfile();
-                userProfileService.save(userProfile);
-            } else {
-                userProfileVo.userProfile(userProfile);
-                userProfileService.updateById(userProfile);
-            }
-            return Response.of(ResponseCode.OK).entity(OK);
-        } catch (Exception e) {
-            return Response.of(ResponseCode.INTERNAL_SERVER_ERROR).entity(INTERNAL_SERVER_ERROR);
-        }
+    public Object modifyUserInfo(User user) {
+        String token = Jwt.createToken(Map.of("username", user.getUsername(), "userId", user.getId()));
+        return this.updateById(user) ? Response.of(ResponseCode.OK, Map.of("Authorization", token, "userId", user.getId())) : Response.of(ResponseCode.INTERNAL_SERVER_ERROR);
     }
 
     @Override
     public Object userExist(String username) {
-        if(this.getOne(Wrappers.<User>lambdaQuery().eq(User::getUsername,username))!=null){
-            return Response.of(ResponseCode.OK,true).entity(OK);
+        if (this.getOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, username)) != null) {
+            return Response.of(ResponseCode.OK, true).entity(OK);
         }
-        return Response.of(ResponseCode.OK,false).entity(OK);
+        return Response.of(ResponseCode.OK, false).entity(OK);
     }
 
     @Override
@@ -194,6 +180,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String avatarUrl = this.getById(id).getAvatar();
         return Response.of(ResponseCode.OK,
                 Map.of("avatarUrl", Objects.requireNonNullElse(avatarUrl, "https://joeschmoe.io/api/v1/random"))).entity(OK);
+    }
+
+    @Override
+    public Object getUsers() {
+        List<UserBriefDTO> users = this.list(Wrappers.lambdaQuery()).stream().map(User::brief).collect(Collectors.toList());
+        return Response.of(ResponseCode.OK, users);
+    }
+
+    @Override
+    public Object searchUserByName(String name) {
+        List<UserBriefDTO> users = this.list(Wrappers.<User>lambdaQuery().like(User::getUsername, name)).stream().map(User::brief).collect(Collectors.toList());
+        return Response.of(ResponseCode.OK, users);
+    }
+
+    @Override
+    public Object changeRoleById(Long id, Integer role) {
+        User user = this.getById(id);
+        User updateUser = user.setRoleId(Long.valueOf(role));
+        this.updateById(updateUser);
+        return Response.of(ResponseCode.OK);
     }
 
 }

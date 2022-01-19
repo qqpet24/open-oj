@@ -1,5 +1,6 @@
 package com.xmu.auth.controller;
 
+import com.xmu.auth.domain.User;
 import com.xmu.auth.request.UserProfileVo;
 import com.xmu.auth.request.UserVo;
 import com.xmu.auth.service.UserService;
@@ -63,11 +64,11 @@ public class UserController {
     }
 
     //@PreAuthorize("hasAnyAuthority('ADMIN','USER')")
-    @PostMapping("/{id}/info")
+    @PostMapping("/info")
     @ApiOperation("修改用户信息")
-    public Object modifyUserInfo(@PathVariable Long id, @RequestBody UserProfileVo userProfileVo) {
+    public Object modifyUserInfo(@RequestBody User user) {
         //TODO:自己只能改自己的
-        return userService.modifyUserInfo(id, userProfileVo);
+        return userService.modifyUserInfo(user);
     }
 
     //有注解一定校验token
@@ -77,4 +78,21 @@ public class UserController {
         return userService.getAvatarByUserId(id);
     }
 
+    @GetMapping("/all")
+    @ApiOperation("获取所有用户信息 For Admin")
+    public Object getUsers(){
+        return userService.getUsers();
+    }
+
+    @GetMapping("/search")
+    @ApiOperation("根据用户名查找用户")
+    public Object searchUserByName(@RequestParam String name){
+        return userService.searchUserByName(name);
+    }
+
+    @PutMapping("/{id}")
+    @ApiOperation("修改用户权限")
+    public Object changeRoleById(@RequestParam Integer role, @PathVariable Long id){
+        return userService.changeRoleById(id,role);
+    }
 }

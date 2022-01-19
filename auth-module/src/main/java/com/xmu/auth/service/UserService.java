@@ -20,9 +20,16 @@ public interface UserService extends IService<User>{
 
     Object getInfo(Long userId);
 
-    Object modifyUserInfo(Long userId, UserProfileVo userProfileVo);
+    Object modifyUserInfo(User user);
 
     Object userExist(String username);
 
     Object getAvatarByUserId(Long id);
+
+    Object getUsers();
+
+    Object searchUserByName(String name);
+
+    Object changeRoleById(Long id, Integer role);
+
 }

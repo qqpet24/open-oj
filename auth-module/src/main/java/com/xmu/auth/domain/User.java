@@ -2,6 +2,7 @@ package com.xmu.auth.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.xmu.auth.response.UserBriefDTO;
 import com.xmu.auth.response.UserProfileDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -43,7 +44,21 @@ public class User {
         BeanUtils.copyProperties(this,userProfileDTO);
         return userProfileDTO;
     }
+
+    public UserBriefDTO brief(){
+        UserBriefDTO userBriefDTO=new UserBriefDTO();
+        BeanUtils.copyProperties(this,userBriefDTO);
+        if(roleId==0L){
+            userBriefDTO.setRoleName("root");
+        }else if(roleId==1L){
+            userBriefDTO.setRoleName("admin");
+        }else {
+            userBriefDTO.setRoleName("common");
+        }
+        return userBriefDTO;
+    }
 }
+
 
 
 

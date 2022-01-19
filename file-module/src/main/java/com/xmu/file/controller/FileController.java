@@ -62,7 +62,7 @@ public class FileController {
                     null,
                     filename,
                     userId,
-                    (path="101.37.20.199:8888/"+path),
+                    (path="http://101.37.20.199:8888/"+path),
                     extName,
                     username,
                     new Date()));

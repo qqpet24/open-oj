@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author summer
@@ -35,7 +36,7 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> impl
             ContestBriefInfoDTO contestBriefInfoDTO = new ContestBriefInfoDTO();
             BeanUtils.copyProperties(contest, contestBriefInfoDTO);
             return brief(contest, contestBriefInfoDTO);
-        }).toList();
+        }).collect(Collectors.toList());
 
         return Response.of(ResponseCode.OK, contestBriefInfoDTOS);
     }

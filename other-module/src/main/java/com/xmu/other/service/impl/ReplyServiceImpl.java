@@ -21,6 +21,7 @@ import request.ReplyDTO;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author summer
@@ -128,7 +129,7 @@ public class ReplyServiceImpl extends ServiceImpl<ReplyMapper, Reply> implements
             queryWrapper.eq("detail",reply.getId());
             List<Reply> replyList = this.list(queryWrapper);
             replyList.add(reply);
-            List<Long> replyIdList = replyList.stream().map(Reply::getId).toList();
+            List<Long> replyIdList = replyList.stream().map(Reply::getId).collect(Collectors.toList());
             result = this.removeByIds(replyIdList);
         }else{
             result = this.removeById(commentId);
@@ -153,7 +154,7 @@ public class ReplyServiceImpl extends ServiceImpl<ReplyMapper, Reply> implements
         }
 
         List<Reply> replyList = this.list(queryWrapper);
-        List<ReplyBriefDTO> replyDTOList = replyList.stream().map(Reply::toReplyBriefDTO).toList();
+        List<ReplyBriefDTO> replyDTOList = replyList.stream().map(Reply::toReplyBriefDTO).collect(Collectors.toList());
         return Response.of(ResponseCode.OK,replyDTOList);
     }
 
@@ -174,7 +175,7 @@ public class ReplyServiceImpl extends ServiceImpl<ReplyMapper, Reply> implements
             queryWrapper.eq("detail",detail);
         }
         List<Reply> replyList = this.list(queryWrapper);
-        List<ReplyDetailDTO> replyDTOList = replyList.stream().map(Reply::toReplyDetailDTO).toList();
+        List<ReplyDetailDTO> replyDTOList = replyList.stream().map(Reply::toReplyDetailDTO).collect(Collectors.toList());
         return Response.of(ResponseCode.OK,replyDTOList);
     }
 }

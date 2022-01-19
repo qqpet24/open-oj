@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import request.BulletinDTO;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author summer
@@ -22,7 +23,7 @@ public class BulletinServiceImpl extends ServiceImpl<BulletinMapper, Bulletin> i
     @Override
     public Object getAllAnnouncement() {
         List<com.xmu.other.response.BulletinDTO> announcements
-                = this.list(Wrappers.lambdaQuery()).stream().map(Bulletin::toDTO).toList();
+                = this.list(Wrappers.lambdaQuery()).stream().map(Bulletin::toDTO).collect(Collectors.toList());
         return Response.of(ResponseCode.OK,announcements);
     }
 

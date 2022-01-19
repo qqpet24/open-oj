@@ -26,7 +26,7 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
     @Override
     public Object getProblems() {
         List<ProblemBriefDTO> problemBriefs
-                = this.list(Wrappers.lambdaQuery()).stream().map(Problem::brief).toList();
+                = this.list(Wrappers.lambdaQuery()).stream().map(Problem::brief).collect(Collectors.toList());
         return problemBriefs.isEmpty() ? Response.of(ResponseCode.NOT_FOUND) : Response.of(ResponseCode.OK, problemBriefs);
     }
 

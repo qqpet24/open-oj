@@ -51,10 +51,12 @@ public class Problem {
     public ProblemBriefDTO brief() {
         ProblemBriefDTO problemBrief = new ProblemBriefDTO();
         BeanUtils.copyProperties(this, problemBrief);
-        switch (difficulty) {
-            case 0 -> problemBrief.setDifficulty("simple");
-            case 1 -> problemBrief.setDifficulty("medium");
-            case 2 -> problemBrief.setDifficulty("hard");
+        if (difficulty == 0) {
+            problemBrief.setDifficulty("simple");
+        } else if (difficulty == 1) {
+            problemBrief.setDifficulty("medium");
+        } else if (difficulty == 2) {
+            problemBrief.setDifficulty("hard");
         }
         return problemBrief;
     }
