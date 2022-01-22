@@ -30,5 +30,4 @@ public class Solution {
     private Integer codeLength;
     private LocalDateTime judgeTime;
     private Double pass_rate;
-    private BigDecimal fileId;
 }

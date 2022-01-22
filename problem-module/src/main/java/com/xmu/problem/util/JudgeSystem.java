@@ -35,7 +35,12 @@ public class JudgeSystem implements Judge {
 
     @Override
     public void compile() throws InterruptedException, IOException {
-        Process exec = Runtime.getRuntime().exec(compileCmd + " Main.class", null, new File(workDir));
+        Process exec = Runtime.getRuntime().exec(
+                compileCmd +
+                        " Main.java",
+                null,
+                new File(workDir));
+
         if(!exec.waitFor(5, TimeUnit.SECONDS)){
             exec.destroy();
         }

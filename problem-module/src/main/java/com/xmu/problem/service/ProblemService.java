@@ -2,7 +2,11 @@ package com.xmu.problem.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xmu.problem.domain.Problem;
+import com.xmu.problem.request.JudgeDTO;
 import com.xmu.problem.request.ProblemDTO;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.concurrent.Future;
 
 /**
  * @author summer
@@ -16,4 +20,6 @@ public interface ProblemService extends IService<Problem> {
     Object deleteProblem(Long id);
 
     Object createOrModifyProblem(ProblemDTO problem);
+
+    void judge(Long id, JudgeDTO judgeDTO, HttpServletRequest request);
 }
