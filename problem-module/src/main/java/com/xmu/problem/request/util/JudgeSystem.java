@@ -1,4 +1,6 @@
-package com.xmu.problem.util;
+package com.xmu.problem.request.util;
+
+import com.xmu.problem.reponse.JudgeResultDTO;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,10 +29,10 @@ public class JudgeSystem implements Judge {
     }
 
     @Override
-    public JudgeResult check() {
+    public JudgeResultDTO check() {
         File file = new File(standardOutputPath);
         int length = userOutput.length;
-        return new JudgeResult();
+        return null;
     }
 
     @Override

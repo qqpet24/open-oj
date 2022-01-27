@@ -10,6 +10,7 @@ import com.xmu.problem.domain.Problem;
 import com.xmu.problem.domain.Solution;
 import com.xmu.problem.domain.SourceCode;
 import com.xmu.problem.mapper.ProblemMapper;
+import com.xmu.problem.reponse.JudgeResultDTO;
 import com.xmu.problem.reponse.ProblemBriefDTO;
 import com.xmu.problem.request.JudgeDTO;
 import com.xmu.problem.request.ProblemDTO;
@@ -17,7 +18,8 @@ import com.xmu.problem.service.CompileInfoService;
 import com.xmu.problem.service.ProblemService;
 import com.xmu.problem.service.SolutionService;
 import com.xmu.problem.service.SourceCodeService;
-import com.xmu.problem.util.LanguageInfo;
+import com.xmu.problem.request.util.JudgeStatus;
+import com.xmu.problem.request.util.LanguageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
@@ -29,8 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -82,7 +83,7 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
      * @param judgeDTO judge Basic Info
      */
     @Override
-    public void judge(Long id, JudgeDTO judgeDTO, HttpServletRequest request) {
+    public Object judge(Long id, JudgeDTO judgeDTO, HttpServletRequest request) throws Exception {
 
         //1.获取基础信息
         String ipAddress = IpUtil.getIpAddress(request);
@@ -91,7 +92,11 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         String language = judgeDTO.getLanguage();   //"Java"
         LanguageInfo languageInfo
                 = LanguageInfo.getInfoByLanguage(language);
-
+        Problem problem = this.getById(id);
+        //未完成，必做，问题存在检查
+        if(problem == null){
+            throw new Exception("问题不存在");
+        }
         //插入一条solution记录
         Solution solution = Solution.of(
                 null,
@@ -133,25 +138,70 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         String compileError;
         try {
             compileError = compile(languageInfo, workDir).get();
+            System.out.println(compileError);
             if (compileError != null) {
                 boolean compileErrorSaved = compileInfoService.save(CompileInfo.of(
                         null,
                         solutionId,
                         compileError
                 ));
+                //未完成 编译错误应该直接返回
+                return JudgeResultDTO.of(
+                        solutionId,
+                        JudgeStatus.ACCEPTED.getType(),
+                        null,
+                        null
+                );
             }
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
 
         //获取.in和.out文件
+        String inAndOutDir = String.format(
+                "/problem/%d/testData/",
+                id
+        );
+        List<String> testFileOriginalNameList = getTestFileName(inAndOutDir);
 
-        //执行 && 统计pass_rate
-
+        //执行 比较 统计pass_rate
+        for(String testFileOriginalName : testFileOriginalNameList){
+            try {
+                String result = execute(languageInfo,workDir,inAndOutDir+testFileOriginalName+".in",inAndOutDir+testFileOriginalName+".out",problem.getTimeLimit()).get();
+                System.out.println(result);
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
         //插入runtimeInfo
 
         //返回结果（给前端）
+        System.out.println("sa");
+        return null;
+    }
 
+    //in有几个就返回几个,in必须有对应out,否则不返回  test.in test.out test1.in test1.out test2.in
+    private List<String> getTestFileName(String path){
+        File testFile = new File(path);
+        File[] allFiles = testFile.listFiles();
+        if(allFiles == null){
+            return new LinkedList<>();
+        }
+        Set<String> inFileSet = new HashSet<>();
+        Set<String> outFileSet = new HashSet<>();
+        for(File file:allFiles){
+            String fileName = file.getName();
+            int lastIndex = fileName.lastIndexOf(".");
+            String fileOriginalName = fileName.substring(0,lastIndex);
+            String fileExtensionName = fileName.substring(lastIndex+1,fileName.length());
+            if(fileExtensionName.equals("in")){
+                inFileSet.add(fileOriginalName);
+            }else if(fileExtensionName.equals("out")){
+                outFileSet.add(fileOriginalName);
+            }
+        }
+        inFileSet.retainAll(outFileSet);
+        return new LinkedList<>(inFileSet);
     }
 
     private boolean createNewFile(String code, String path) {
@@ -191,14 +241,18 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
                     languageInfo.compileCmd(),
                     null,
                     new File(workDir));
-            if (process.waitFor(5, TimeUnit.SECONDS)) {
-                process.destroy();
-                return new AsyncResult<>(null);
+
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                if(process.isAlive()){
+                    process.destroy();
+                    return new AsyncResult<>("compile exceed time limit");
+                }
             }
+
             //如果编译成功，则不会有报错，而是直接生成.class文件，如果编译失败，则errorStream会有报错信息
             InputStream errorStream = process.getErrorStream();
             return new AsyncResult<>(msgFromError(errorStream));
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return new AsyncResult<>(null);
@@ -224,27 +278,31 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         return msg.toString();
     }
 
-
     //未完成
-    @Async
-    public AsyncResult<Object> execute(LanguageInfo languageInfo, String workDir, String inCasePath,int timeLimit){
-        ProcessBuilder processBuilder
-                = new ProcessBuilder(languageInfo.executeCmd());
+    @Async("taskExecutor")
+    public AsyncResult<String> execute(LanguageInfo languageInfo, String workDir, String inCasePath, String standardOutPath, double timeLimit){
+        ProcessBuilder processBuilder = new ProcessBuilder(languageInfo.executeCmd());
         processBuilder.directory(new File(workDir));
         processBuilder.redirectInput(new File(inCasePath));
         try {
             Process process = processBuilder.start();
-            if(!process.waitFor(timeLimit,TimeUnit.SECONDS)){
-                process.destroy();
-                return new AsyncResult<>("超时了！！！");
+            if(!process.waitFor(languageInfo.getRealTimeLimit(timeLimit).longValue(), TimeUnit.MILLISECONDS)){
+                if(process.isAlive()){
+                    process.destroy();
+                    return new AsyncResult<>("TLE");
+                }
             }
             InputStream errorStream ;
-            //如果发生错误
-            if((errorStream= process.getErrorStream())!=null){
-                return new AsyncResult<>(msgFromError(errorStream));
-                //没有发生错误
-            }else {
-                return new AsyncResult<>(process.getInputStream());
+            //如果有错误流（比如一直开内存导致程序被Kill，并没有错误流）
+            if(process.getErrorStream()!=null){
+                String msg = msgFromError(process.getErrorStream());
+                if(!msg.equals("")){
+                    return new AsyncResult<>(msg);
+                }
+            }
+            if(process.getInputStream()!=null){
+                boolean result = streamCompare(process.getInputStream(),new FileInputStream(standardOutPath));
+                return new AsyncResult<>(result+"");
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -252,4 +310,26 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         return null;
     }
 
+    public boolean streamCompare(InputStream stream1,InputStream stream2) throws IOException {
+        //读取缓冲区大小 256k + 100k
+        final int BUFFER_SIZE = 262144;
+        byte[] buffer1 = new byte[BUFFER_SIZE];
+        byte[] buffer2 = new byte[BUFFER_SIZE];
+        while(true){
+            int l1 = stream1.readNBytes(buffer1,0,BUFFER_SIZE);
+            int l2 = stream2.readNBytes(buffer2,0,BUFFER_SIZE);
+            if(l1!=l2){
+                return false;
+            }
+            for(int i = 0 ; i<l1 ; i++){
+                if(buffer1[i]!=buffer2[i]){
+                    return false;
+                }
+            }
+            if(l1<BUFFER_SIZE){
+                break;
+            }
+        }
+        return true;
+    }
 }

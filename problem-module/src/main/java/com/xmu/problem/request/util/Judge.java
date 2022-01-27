@@ -1,4 +1,6 @@
-package com.xmu.problem.util;
+package com.xmu.problem.request.util;
+
+import com.xmu.problem.reponse.JudgeResultDTO;
 
 import java.io.IOException;
 
@@ -12,5 +14,5 @@ public interface Judge {
 
     void execute() throws IOException, InterruptedException;
 
-    JudgeResult check();
+    JudgeResultDTO check();
 }
