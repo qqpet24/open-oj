@@ -11,6 +11,7 @@ import com.xmu.problem.domain.Solution;
 import com.xmu.problem.domain.SourceCode;
 import com.xmu.problem.mapper.ProblemMapper;
 import com.xmu.problem.reponse.JudgeResultDTO;
+import com.xmu.problem.reponse.JudgeReturnInfo;
 import com.xmu.problem.reponse.ProblemBriefDTO;
 import com.xmu.problem.request.JudgeDTO;
 import com.xmu.problem.request.ProblemDTO;
@@ -95,7 +96,13 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         Problem problem = this.getById(id);
         //未完成，必做，问题存在检查
         if(problem == null){
-            throw new Exception("问题不存在");
+            throw new Exception("Problem no found");
+        }
+        if(language == null || languageInfo == null){
+            throw new Exception("Language no found");
+        }
+        if(userId == null){
+            throw new Exception("User no found");
         }
         //插入一条solution记录
         Solution solution = Solution.of(
@@ -123,6 +130,10 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
                 code
         ));
 
+        if(!solutionSaved || ! codeSaved){
+            throw new Exception("Database error");
+        }
+
         //创建代码文件并写入代码
         String workDir = String.format(
                 "/user/%d/problem/%d/submit/%d/",
@@ -134,27 +145,25 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         String filePath = String.format("%s%s", workDir, languageInfo.getNameBeforeCompile());
         boolean codeFileCreated = createNewFile(code, filePath);
 
+        if(!codeFileCreated){
+            throw new Exception("Filesystem error");
+        }
+
         //编译（async）
-        String compileError;
-        try {
-            compileError = compile(languageInfo, workDir).get();
-            System.out.println(compileError);
-            if (compileError != null) {
-                boolean compileErrorSaved = compileInfoService.save(CompileInfo.of(
-                        null,
-                        solutionId,
-                        compileError
-                ));
-                //未完成 编译错误应该直接返回
-                return JudgeResultDTO.of(
-                        solutionId,
-                        JudgeStatus.ACCEPTED.getType(),
-                        null,
-                        null
-                );
-            }
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        JudgeReturnInfo judgeReturnInfo = compile(languageInfo, workDir).get();
+        assert judgeReturnInfo != null;
+        if (!judgeReturnInfo.getStatus().equals(JudgeStatus.COMPILE_SUCCESS.getType())) {
+            boolean compileErrorSaved = compileInfoService.save(CompileInfo.of(
+                    null,
+                    solutionId,
+                    judgeReturnInfo.getErrorInfo()
+            ));
+            return JudgeResultDTO.of(
+                    solutionId,
+                    judgeReturnInfo.getStatus(),
+                    null,
+                    judgeReturnInfo.getErrorInfo()
+            );
         }
 
         //获取.in和.out文件
@@ -165,19 +174,32 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         List<String> testFileOriginalNameList = getTestFileName(inAndOutDir);
 
         //执行 比较 统计pass_rate
+        JudgeResultDTO judgeResultDTO = JudgeResultDTO.of(
+                solutionId,
+                null,
+                new LinkedList<>(),
+                null
+        );
         for(String testFileOriginalName : testFileOriginalNameList){
             try {
-                String result = execute(languageInfo,workDir,inAndOutDir+testFileOriginalName+".in",inAndOutDir+testFileOriginalName+".out",problem.getTimeLimit()).get();
-                System.out.println(result);
+                judgeReturnInfo = execute(languageInfo,workDir,inAndOutDir+testFileOriginalName+".in",inAndOutDir+testFileOriginalName+".out",problem.getTimeLimit()).get();
+                judgeReturnInfo.setTestCase(testFileOriginalName);
+                judgeResultDTO.getExecuteInfo().add(judgeReturnInfo);
             } catch (ExecutionException e) {
                 e.printStackTrace();
+                judgeResultDTO.getExecuteInfo().add(JudgeReturnInfo.of(
+                        JudgeStatus.UNKNOWN_ERROR.getType(),
+                        testFileOriginalName,
+                        null,
+                        null,
+                        null
+                ));
             }
         }
+        return judgeResultDTO;
         //插入runtimeInfo
 
         //返回结果（给前端）
-        System.out.println("sa");
-        return null;
     }
 
     //in有几个就返回几个,in必须有对应out,否则不返回  test.in test.out test1.in test1.out test2.in
@@ -234,29 +256,38 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
     }
 
     @Async("taskExecutor")
-    public AsyncResult<String> compile(LanguageInfo languageInfo, String workDir) {
-
+    public AsyncResult<JudgeReturnInfo> compile(LanguageInfo languageInfo, String workDir) {
+        JudgeReturnInfo judgeReturnInfo = new JudgeReturnInfo();
         try {
             Process process = Runtime.getRuntime().exec(
                     languageInfo.compileCmd(),
                     null,
                     new File(workDir));
 
-            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+            //magic value
+            Long MAX_COMPILE_TIME = 5L;
+            if (!process.waitFor(MAX_COMPILE_TIME, TimeUnit.SECONDS)) {
                 if(process.isAlive()){
                     process.destroy();
-                    return new AsyncResult<>("compile exceed time limit");
+                    judgeReturnInfo.setStatus(JudgeStatus.COMPILE_TIME_LIMIT_EXCEED.getType());
+                    judgeReturnInfo.setErrorInfo("Compile exceed "+MAX_COMPILE_TIME+" second(s)");
+                    return new AsyncResult<>(judgeReturnInfo);
                 }
             }
 
             //如果编译成功，则不会有报错，而是直接生成.class文件，如果编译失败，则errorStream会有报错信息
-            InputStream errorStream = process.getErrorStream();
-            return new AsyncResult<>(msgFromError(errorStream));
+            String errorInfo = msgFromError(process.getErrorStream());
+            if(errorInfo != null){
+                judgeReturnInfo.setStatus(JudgeStatus.COMPILE_ERROR.getType());
+                judgeReturnInfo.setErrorInfo(errorInfo);
+                return new AsyncResult<>(judgeReturnInfo);
+            }
         } catch (Exception e) {
+            judgeReturnInfo.setStatus(JudgeStatus.UNKNOWN_ERROR.getType());
             e.printStackTrace();
         }
-        return new AsyncResult<>(null);
-
+        judgeReturnInfo.setStatus(JudgeStatus.COMPILE_SUCCESS.getType());
+        return new AsyncResult<>(judgeReturnInfo);
     }
 
     private String msgFromError(final InputStream input) {
@@ -267,9 +298,24 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
             e.printStackTrace();
         }
         StringBuilder msg = new StringBuilder();
-        String line;
         try {
-            while ((line = bf.readLine()) != null) {
+            Boolean isFirst = true;
+            while (true) {
+                String line = bf.readLine();
+                if(isFirst){
+                    isFirst = false;
+                    if(line == null){
+                        return null;
+                    }
+                }
+                if(line == null){
+                    break;
+                }
+                //magic value
+                //max return error info <= 256kb
+                if(msg.length() + line.length()>=256*1024){
+                    break;
+                }
                 msg.append(line).append("\n");
             }
         } catch (IOException e) {
@@ -278,40 +324,50 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         return msg.toString();
     }
 
-    //未完成
     @Async("taskExecutor")
-    public AsyncResult<String> execute(LanguageInfo languageInfo, String workDir, String inCasePath, String standardOutPath, double timeLimit){
+    public AsyncResult<JudgeReturnInfo> execute(LanguageInfo languageInfo, String workDir, String inCasePath, String standardOutPath, double timeLimit){
+        JudgeReturnInfo judgeReturnInfo = new JudgeReturnInfo();
         ProcessBuilder processBuilder = new ProcessBuilder(languageInfo.executeCmd());
         processBuilder.directory(new File(workDir));
         processBuilder.redirectInput(new File(inCasePath));
         try {
+            Long beforeExecuteTime = System.currentTimeMillis();
             Process process = processBuilder.start();
             if(!process.waitFor(languageInfo.getRealTimeLimit(timeLimit).longValue(), TimeUnit.MILLISECONDS)){
                 if(process.isAlive()){
                     process.destroy();
-                    return new AsyncResult<>("TLE");
+                    judgeReturnInfo.setStatus(JudgeStatus.EXECUTION_TIME_LIMIT_EXCEED.getType());
+                    return new AsyncResult<>(judgeReturnInfo);
                 }
             }
-            InputStream errorStream ;
-            //如果有错误流（比如一直开内存导致程序被Kill，并没有错误流）
-            if(process.getErrorStream()!=null){
-                String msg = msgFromError(process.getErrorStream());
-                if(!msg.equals("")){
-                    return new AsyncResult<>(msg);
-                }
-            }
+            Long realExecuteTime = System.currentTimeMillis()-beforeExecuteTime;
+            judgeReturnInfo.setExecuteTime(realExecuteTime);
+
             if(process.getInputStream()!=null){
                 boolean result = streamCompare(process.getInputStream(),new FileInputStream(standardOutPath));
-                return new AsyncResult<>(result+"");
+                if(!result){
+                    //比如一直开内存导致程序被Kill，并没有错误流
+                    if(process.exitValue() != 0){
+                        judgeReturnInfo.setStatus(JudgeStatus.RUNTIME_ERROR.getType());
+                        judgeReturnInfo.setErrorInfo("Process exit with non zero value:"+process.exitValue()+" and the answer is incorrect");
+                    }else{
+                        judgeReturnInfo.setStatus(JudgeStatus.WRONG_ANSWER.getType());
+                    }
+                }else{
+                    judgeReturnInfo.setStatus(JudgeStatus.ACCEPTED.getType());
+                }
+                return new AsyncResult<>(judgeReturnInfo);
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-        return null;
+        judgeReturnInfo.setStatus(JudgeStatus.UNKNOWN_ERROR.getType());
+        return new AsyncResult<>(judgeReturnInfo);
     }
 
     public boolean streamCompare(InputStream stream1,InputStream stream2) throws IOException {
-        //读取缓冲区大小 256k + 100k
+        //magic value
+        //读取缓冲区大小 256k;
         final int BUFFER_SIZE = 262144;
         byte[] buffer1 = new byte[BUFFER_SIZE];
         byte[] buffer2 = new byte[BUFFER_SIZE];

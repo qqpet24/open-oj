@@ -9,14 +9,14 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 @Accessors(chain = true)
-public class MemAndTime {
+public class JudgeReturnInfo {
+    private String status;
     //测试用例的文件名
     private String testCase;
     //unit ms
-    private Integer executeTime;
+    private Long executeTime;
     //unit kb
-    private Integer executeMem;
+    private Long executeMem;
     //错误
-    private String error;
-
+    private String errorInfo;
 }

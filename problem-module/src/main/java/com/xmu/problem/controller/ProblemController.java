@@ -53,8 +53,7 @@ public class ProblemController {
     @PostMapping("{id}/judge")
     @ApiOperation("判题")
     public Object judgeProblem(@PathVariable Long id, @RequestBody JudgeDTO judgeDTO, HttpServletRequest request) throws Exception {
-        problemService.judge(id,judgeDTO,request);
-        return null;
+        return problemService.judge(id,judgeDTO,request);
     }
 
     @PostMapping("/{id}/receive/user/{userId}")
