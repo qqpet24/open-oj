@@ -24,6 +24,7 @@ import com.xmu.problem.request.util.LanguageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -182,7 +183,7 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         );
         for(String testFileOriginalName : testFileOriginalNameList){
             try {
-                judgeReturnInfo = execute(languageInfo,workDir,inAndOutDir+testFileOriginalName+".in",inAndOutDir+testFileOriginalName+".out",problem.getTimeLimit()).get();
+                judgeReturnInfo = execute(languageInfo,workDir,inAndOutDir+testFileOriginalName+".in",inAndOutDir+testFileOriginalName+".out",problem.getTimeLimit(),problem.getMemoryLimit(),testFileOriginalName).get();
                 judgeReturnInfo.setTestCase(testFileOriginalName);
                 judgeResultDTO.getExecuteInfo().add(judgeReturnInfo);
             } catch (ExecutionException e) {
@@ -196,6 +197,8 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
                 ));
             }
         }
+        //delete file before return
+        deleteFile(workDir+languageInfo.getNameBeforeExecute());
         return judgeResultDTO;
         //插入runtimeInfo
 
@@ -253,6 +256,16 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         }
 
         return parentDirCreated && created;
+    }
+
+    private boolean deleteFile(String path){
+        try{
+            File file = new File(path);
+            return file.delete();
+        }catch (Exception e){
+            System.out.println(e);
+        }
+        return false;
     }
 
     @Async("taskExecutor")
@@ -324,24 +337,67 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         return msg.toString();
     }
 
+    private long[] readJudgeResult(String path){
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(path));
+            String str = in.readLine();
+            String[] strs = str.split(" ");
+            long[] result = new long[strs.length];
+            for(int i = 0;i<strs.length;i++){
+                result[i] = Long.parseLong(strs[i]);
+            }
+            return result;
+        } catch (IOException e) {
+        }
+        return null;
+    }
+
     @Async("taskExecutor")
-    public AsyncResult<JudgeReturnInfo> execute(LanguageInfo languageInfo, String workDir, String inCasePath, String standardOutPath, double timeLimit){
+    public AsyncResult<JudgeReturnInfo> execute(LanguageInfo languageInfo, String workDir, String inCasePath, String standardOutPath, double timeLimit, int memoryLimit,String originalName){
         JudgeReturnInfo judgeReturnInfo = new JudgeReturnInfo();
         ProcessBuilder processBuilder = new ProcessBuilder(languageInfo.executeCmd());
         processBuilder.directory(new File(workDir));
         processBuilder.redirectInput(new File(inCasePath));
+        String cJudgeResultPath = workDir+originalName+".judge";
+
         try {
             Long beforeExecuteTime = System.currentTimeMillis();
             Process process = processBuilder.start();
+            //magic value
+            ProcessBuilder cJudgeProcessBuilder = new ProcessBuilder(List.of("/tools/mem",process.pid()+"",memoryLimit+"",cJudgeResultPath));
+            Process cJudgeProcess = cJudgeProcessBuilder.start();
             if(!process.waitFor(languageInfo.getRealTimeLimit(timeLimit).longValue(), TimeUnit.MILLISECONDS)){
                 if(process.isAlive()){
                     process.destroy();
+                    judgeReturnInfo.setExecuteTime(System.currentTimeMillis()-beforeExecuteTime);
                     judgeReturnInfo.setStatus(JudgeStatus.EXECUTION_TIME_LIMIT_EXCEED.getType());
                     return new AsyncResult<>(judgeReturnInfo);
                 }
             }
+
             Long realExecuteTime = System.currentTimeMillis()-beforeExecuteTime;
             judgeReturnInfo.setExecuteTime(realExecuteTime);
+            long[] cJudgeResult = {0};
+            if(cJudgeProcess.isAlive()){
+                //magic value
+                if(cJudgeProcess.waitFor(500,TimeUnit.MILLISECONDS)){
+                    if(cJudgeProcess.isAlive()){
+                        cJudgeProcess.destroy();
+                    }else{
+                        long[] tmp = readJudgeResult(cJudgeResultPath);
+                        if(tmp!=null) cJudgeResult = tmp;
+                    }
+                }
+            }else{
+                long[] tmp = readJudgeResult(cJudgeResultPath);
+                if(tmp!=null) cJudgeResult = tmp;
+            }
+            judgeReturnInfo.setExecuteMem(cJudgeResult[0]);
+
+            if(cJudgeResult[0]>memoryLimit){
+                judgeReturnInfo.setStatus(JudgeStatus.MEMORY_LIMIT_EXCEED.getType());
+                return new AsyncResult<>(judgeReturnInfo);
+            }
 
             if(process.getInputStream()!=null){
                 boolean result = streamCompare(process.getInputStream(),new FileInputStream(standardOutPath));
