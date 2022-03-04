@@ -16,7 +16,7 @@ public interface UserService extends IService<User>{
 
     Object register(UserVo userVo, HttpServletRequest request);
 
-    Object modifyRoleOfUser(Long userId);
+    Object modifyRoleOfUser(Long userId,String role);
 
     Object getInfo(Long userId);
 

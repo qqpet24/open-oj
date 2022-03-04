@@ -61,4 +61,10 @@ public class ProblemController {
     public Object receiveSolution(@PathVariable Long id, @PathVariable Long userId) {
         return null;
     }
+
+    @GetMapping("/{id}/basicInfo")
+    @ApiOperation("获取题目基础信息")
+    public Object getBasicProblemInfo(@PathVariable Long id){
+        return problemService.getBasicProblemInfo(id);
+    }
 }

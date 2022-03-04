@@ -51,8 +51,8 @@ public class UserController {
     //@PreAuthorize("hasAnyAuthority('ADMIN')")
     @PutMapping("/{id}/role")
     @ApiOperation("修改用户角色")
-    public Object modifyRoleOfUser(@PathVariable Long id) {
-        return userService.modifyRoleOfUser(id);
+    public Object modifyRoleOfUser(@PathVariable Long id,@RequestParam String role) {
+        return userService.modifyRoleOfUser(id,role);
     }
 
     //@PreAuthorize("hasAnyAuthority('ADMIN','USER')")

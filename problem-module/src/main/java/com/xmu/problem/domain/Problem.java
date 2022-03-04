@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.xmu.problem.reponse.ProblemBasicInfo;
 import com.xmu.problem.reponse.ProblemBriefDTO;
 import com.xmu.problem.request.ProblemDTO;
 import lombok.AllArgsConstructor;
@@ -45,23 +46,29 @@ public class Problem {
     private List<?> categories;
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<?> lists;
-    private Integer difficulty;
+    private String difficulty;
     private Integer star;
 
     public ProblemBriefDTO brief() {
         ProblemBriefDTO problemBrief = new ProblemBriefDTO();
         BeanUtils.copyProperties(this, problemBrief);
-        if (difficulty == 0) {
-            problemBrief.setDifficulty("simple");
-        } else if (difficulty == 1) {
-            problemBrief.setDifficulty("medium");
-        } else if (difficulty == 2) {
-            problemBrief.setDifficulty("hard");
-        }
+//        if (difficulty == 0) {
+//            problemBrief.setDifficulty("simple");
+//        } else if (difficulty == 1) {
+//            problemBrief.setDifficulty("medium");
+//        } else if (difficulty == 2) {
+//            problemBrief.setDifficulty("hard");
+//        }
         return problemBrief;
     }
 
     public Problem(ProblemDTO problemDTO) {
         BeanUtils.copyProperties(problemDTO, this);
+    }
+
+    public ProblemBasicInfo problemBasicInfo(){
+        ProblemBasicInfo problemBasicInfo = new ProblemBasicInfo();
+        BeanUtils.copyProperties(this,problemBasicInfo);
+        return problemBasicInfo;
     }
 }

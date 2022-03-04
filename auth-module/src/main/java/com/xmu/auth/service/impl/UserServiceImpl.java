@@ -84,7 +84,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     "username", userDetails.getUsername(),
                     "userId", userDetails.getId()
             ));
-            return Response.of(ResponseCode.OK, Map.of("Authorization", token, "userId", user.getId())).entity(OK);
+            return Response.of(ResponseCode.OK, Map.of("Authorization", token, "userId", user.getId(), "role", user.getRoleId())).entity(OK);
         }
         return Response.of(ResponseCode.INTERNAL_SERVER_ERROR).entity(INTERNAL_SERVER_ERROR);
     }
@@ -126,12 +126,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return TRUE or FALSE
      */
     @Override
-    public Object modifyRoleOfUser(Long userId) {
+    public Object modifyRoleOfUser(Long userId, String role) {
         User user = getById(userId);
-        if (user.getRoleId().equals(Role.ADMIN.getRoleId())) {
-            user.setRoleId(Role.USER.getRoleId());
-        } else {
-            user.setRoleId(Role.ADMIN.getRoleId());
+        switch (role) {
+            case "common" -> user.setRoleId(2L);
+            case "admin" -> user.setRoleId(1L);
         }
         if (updateById(user)) {
             return Response.of(ResponseCode.OK).entity(OK);

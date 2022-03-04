@@ -37,5 +37,5 @@ public class ProblemDTO {
     private List<?> categories;
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<?> lists;
-    private Integer difficulty;
+    private String difficulty;
 }
