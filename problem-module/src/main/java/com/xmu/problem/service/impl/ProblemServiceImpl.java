@@ -100,11 +100,15 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
             throw new Exception("Problem no found");
         }
         if (language == null || languageInfo == null) {
-            throw new Exception("Language no found");
+            throw new Exception("Language no support");
         }
         if (userId == null) {
             throw new Exception("User no found");
         }
+        if (judgeDTO.getCode() == null) {
+            throw new Exception("Code no found");
+        }
+
         //插入一条solution记录
         Solution solution = Solution.of(
                 null,
@@ -114,10 +118,10 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
                 null,
                 LocalDateTime.now(),
                 null,
-                Objects.requireNonNull(languageInfo).getCode(),
+                Objects.requireNonNull(languageInfo).getLanguage(),
                 ipAddress,
                 null,
-                null,
+                judgeDTO.getCode().length(),
                 null,
                 0.0
         );
@@ -159,6 +163,8 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
                     solutionId,
                     judgeReturnInfo.getErrorInfo()
             ));
+            solution.setResult(judgeReturnInfo.getStatus());
+            solutionService.updateById(solution);
             return JudgeResultDTO.of(
                     solutionId,
                     judgeReturnInfo.getStatus(),
@@ -188,6 +194,8 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
                 judgeResultDTO.getExecuteInfo().add(judgeReturnInfo);
             } catch (ExecutionException e) {
                 e.printStackTrace();
+                solution.setResult(JudgeStatus.UNKNOWN_ERROR.getType());
+                solutionService.updateById(solution);
                 judgeResultDTO.getExecuteInfo().add(JudgeReturnInfo.of(
                         JudgeStatus.UNKNOWN_ERROR.getType(),
                         testFileOriginalName,
@@ -199,6 +207,47 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         }
         //delete file before return
         deleteFile(workDir + languageInfo.getNameBeforeExecute());
+
+        //update solution table
+        {
+            List<JudgeReturnInfo> list = judgeResultDTO.getExecuteInfo();
+            Integer time = 0;
+            Integer memory = 0;
+            String error = null;
+            int passCase = 0;
+            int failCase = 0;
+
+            for(JudgeReturnInfo tmp:list){
+                if(!tmp.getStatus().equals("AC")){
+                    if(error == null) error = tmp.getStatus();
+                    failCase++;
+                }else{
+                    time+=tmp.getExecuteTime()==null?0:(int)(long)tmp.getExecuteTime();
+                    memory+=tmp.getExecuteMem()==null?0:(int)(long)tmp.getExecuteMem();
+                    passCase++;
+                }
+            }
+
+            //无测试用例时候，后台记录AC,但是不返回
+            if(passCase+failCase==0){
+                solution.setResult(JudgeStatus.ACCEPTED.getType());
+                solution.setTime(0);
+                solution.setMemory(0);
+                solution.setPass_rate(1.0d);
+            }else{
+                double passRate = (double)passCase/((double)passCase+(double)failCase);
+                if(error!=null){
+                    solution.setResult(error);
+                }else{
+                    solution.setResult(JudgeStatus.ACCEPTED.getType());
+                    solution.setTime(time);
+                    solution.setMemory(memory);
+                }
+                solution.setPass_rate(passRate);
+            }
+
+            solutionService.updateById(solution);
+        }
         return judgeResultDTO;
         //插入runtimeInfo
 
@@ -364,6 +413,10 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         ProcessBuilder processBuilder = new ProcessBuilder(languageInfo.executeCmd());
         processBuilder.directory(new File(workDir));
         processBuilder.redirectInput(new File(inCasePath));
+        Map<String, String> map = processBuilder.environment();
+        //magic value
+        map.put("LD_PRELOAD","/tools/fakev2.so");
+
         String cJudgeResultPath = workDir + originalName + ".judge";
 
         try {

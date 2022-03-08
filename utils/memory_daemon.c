@@ -5,7 +5,9 @@
 #include <stdarg.h>
 
 #define BUFFER_SIZE 4096
-#define GET_INFO_INTERVAL 2000 //us
+#define GET_INFO_INTERVAL 1000000 //ns 1000000ns=1ms
+#define _POSIX_C_SOURCE 199309L
+//sudo gcc mem.c -o mem -O2 -lm -std=gnu99
 //modify from hust_oj
 long long int get_proc_status(int pid, const char *mark){
 	FILE *pf;
@@ -70,6 +72,9 @@ int write_result(int mb,char* path){
 	return 0;
 }
 int main(int argc,char* argv[]){
+	struct timespec ts;
+	ts.tv_sec = 0;
+    ts.tv_nsec = GET_INFO_INTERVAL;
 	//return 0 normal 1 process no found 2 file system error
     int pid = atoi(argv[1]);
     int memory_limit_mb = atoi(argv[2]);
@@ -98,6 +103,8 @@ int main(int argc,char* argv[]){
 				return write_result(kb_to_mb(max_memory_kb),file_path);
 			}
 		}
-		usleep(GET_INFO_INTERVAL);
+		//nanosleep()
+		//usleep(GET_INFO_INTERVAL);
+		nanosleep(&ts, NULL);
 	}
 }

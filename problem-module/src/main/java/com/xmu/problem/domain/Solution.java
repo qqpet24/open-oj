@@ -26,8 +26,8 @@ public class Solution {
     private Integer time;
     private Integer memory;
     private LocalDateTime inDate;
-    private Short result;
-    private Integer language;
+    private String result;
+    private String language;
     private String ip;
     private Integer valid;
     private Integer codeLength;
