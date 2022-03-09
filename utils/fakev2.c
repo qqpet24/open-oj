@@ -1,10 +1,11 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/select.h>
+#include <stdio.h>
 //https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md
 //https://www.cnblogs.com/luo77/p/5823241.html
-//sudo gcc -c -fPIC fakev2.c -o fakev2.o -O2 -std=gnu99
-//sudo gcc fakev2.o -shared -o fakev2.so
+//sudo gcc -c -fPIC fakev2.c -o fakev2.o -O2 -std=gnu99 -w
+//sudo gcc fakev2.o -shared -o fakev2.so -w
 //LD_PRELOAD=./fakev2.so 必须放在执行命令前，否则无效
 
 //process
@@ -109,3 +110,8 @@ int setresgid(gid_t rgid, gid_t egid, gid_t sgid){exit(1);}
 int setfsgid(gid_t fsgid){exit(1);}
 int setfsuid(uid_t fsuid){exit(1);}
 int getgroups(int size, gid_t list[]){exit(1);}
+
+//后续添加,文件读写删除其实加这三个即可,这三个限制了,文件都打不开
+int open(const char *pathname, int flags, ...){exit(1);}
+int open64(const char *pathname, int flags, ...){exit(1);}
+FILE *fopen(const char *pathname, const char *mode){exit(1);}

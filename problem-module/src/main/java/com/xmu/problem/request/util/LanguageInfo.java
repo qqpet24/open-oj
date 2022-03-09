@@ -7,7 +7,7 @@ import java.util.List;
 
 @Getter
 public enum LanguageInfo {
-    JAVA("java",0,"javac Main.java",List.of("java"),"Main.java","Main",0d,1d,1d),
+    JAVA("java",0,"javac Main.java",List.of("java","Main"),"Main.java","Main",0d,1d,1d),
     //g++ Main.cc -o Main -O2 -lm -std=c++14
     CPP("cpp",1,"g++ Main.cpp -o Main -O2 -lm -std=c++14 -w",List.of("./Main"),"Main.cpp","Main",0d,1d,1d),
     //gcc Main.c -o Main -O2 -lm -std=c99
