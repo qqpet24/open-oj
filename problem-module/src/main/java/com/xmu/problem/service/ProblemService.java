@@ -23,5 +23,7 @@ public interface ProblemService extends IService<Problem> {
 
     Object judge(Long id, JudgeDTO judgeDTO, HttpServletRequest request) throws Exception;
 
+    Object judgev2(Long id, JudgeDTO judgeDTO, HttpServletRequest request) throws Exception;
+
     Object getBasicProblemInfo(Long id);
 }

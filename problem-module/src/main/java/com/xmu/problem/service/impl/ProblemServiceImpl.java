@@ -22,8 +22,11 @@ import com.xmu.problem.service.SourceCodeService;
 import com.xmu.problem.request.util.JudgeStatus;
 import com.xmu.problem.request.util.LanguageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +38,8 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -502,5 +507,241 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
             }
         }
         return true;
+    }
+
+    @Override
+    public Object judgev2(Long id, JudgeDTO judgeDTO, HttpServletRequest request) throws Exception{
+        //本函数调用新版的C语言判题机,性能更加高效
+        //1.获取基础信息
+        String ipAddress = IpUtil.getIpAddress(request);
+        String code = judgeDTO.getCode();
+        Long userId = judgeDTO.getUserId();
+        String language = judgeDTO.getLanguage();   //"Java"
+        LanguageInfo languageInfo
+                = LanguageInfo.getInfoByLanguage(language);
+        Problem problem = this.getById(id);
+        //未完成，必做，问题存在检查
+        if (problem == null) {
+            throw new Exception("Problem no found");
+        }
+        if (language == null || languageInfo == null) {
+            throw new Exception("Language no support");
+        }
+        if (userId == null) {
+            throw new Exception("User no found");
+        }
+        if (judgeDTO.getCode() == null) {
+            throw new Exception("Code no found");
+        }
+
+        //插入一条solution记录
+        Solution solution = Solution.of(
+                null,
+                id,
+                userId,
+                null,
+                null,
+                LocalDateTime.now(),
+                null,
+                Objects.requireNonNull(languageInfo).getLanguage(),
+                ipAddress,
+                null,
+                judgeDTO.getCode().length(),
+                null,
+                0.0
+        );
+        boolean solutionSaved = solutionService.save(solution);
+
+        //插入sourceCode记录
+        Long solutionId = solution.getId();
+        boolean codeSaved = sourceCodeService.save(SourceCode.of(
+                null,
+                solutionId,
+                code
+        ));
+
+        if (!solutionSaved || !codeSaved) {
+            throw new Exception("Database error");
+        }
+
+        //创建代码文件并写入代码
+        String workDir = String.format(
+                "/user/%d/problem/%d/submit/%d/",
+                userId,
+                id,
+                solutionId
+        );
+        //  /user/99/problem/100/submit/56/Main.java
+        String filePath = String.format("%s%s", workDir, languageInfo.getNameBeforeCompile());
+        boolean codeFileCreated = createNewFile(code, filePath);
+
+        if (!codeFileCreated) {
+            throw new Exception("Filesystem error");
+        }
+
+        //编译（async）
+        JudgeReturnInfo judgeReturnInfo = compile(languageInfo, workDir).get();
+        assert judgeReturnInfo != null;
+        if (!judgeReturnInfo.getStatus().equals(JudgeStatus.COMPILE_SUCCESS.getType())) {
+            boolean compileErrorSaved = compileInfoService.save(CompileInfo.of(
+                    null,
+                    solutionId,
+                    judgeReturnInfo.getErrorInfo()
+            ));
+            solution.setResult(judgeReturnInfo.getStatus());
+            solutionService.updateById(solution);
+            return JudgeResultDTO.of(
+                    solutionId,
+                    judgeReturnInfo.getStatus(),
+                    null,
+                    judgeReturnInfo.getErrorInfo()
+            );
+        }
+
+        //获取.in和.out文件
+        String inAndOutDir = String.format(
+                "/problem/%d/testData/",
+                id
+        );
+        List<String> testFileOriginalNameList = getTestFileName(inAndOutDir);
+
+        //执行 比较 统计pass_rate
+        JudgeResultDTO judgeResultDTO = JudgeResultDTO.of(
+                solutionId,
+                null,
+                new LinkedList<>(),
+                null
+        );
+
+//        LinkedList<AsyncResult<JudgeReturnInfo>> asyncList = new LinkedList<>();
+//        for (String testFileOriginalName : testFileOriginalNameList) {
+//            try {
+//                judgeReturnInfo = executev2(languageInfo, workDir, inAndOutDir, testFileOriginalName,  problem.getTimeLimit(), problem.getMemoryLimit()).get();
+//                judgeResultDTO.getExecuteInfo().add(judgeReturnInfo);
+//            } catch (ExecutionException e) {
+//                e.printStackTrace();
+//                solution.setResult(JudgeStatus.UNKNOWN_ERROR.getType());
+//                solutionService.updateById(solution);
+//                judgeResultDTO.getExecuteInfo().add(JudgeReturnInfo.of(
+//                        JudgeStatus.UNKNOWN_ERROR.getType(),
+//                        testFileOriginalName,
+//                        null,
+//                        null,
+//                        null
+//                ));
+//            }
+//        }
+
+        LinkedList<Future<JudgeReturnInfo>> asyncList = new LinkedList<>();
+        for (String testFileOriginalName : testFileOriginalNameList) {
+            try {
+                Future<JudgeReturnInfo> judgeReturnInfoAsyncResult = executev2(languageInfo, workDir, inAndOutDir, testFileOriginalName,  problem.getTimeLimit(), problem.getMemoryLimit());
+                asyncList.add(judgeReturnInfoAsyncResult);
+            } catch (Exception e) {
+                e.printStackTrace();
+                solution.setResult(JudgeStatus.UNKNOWN_ERROR.getType());
+                solutionService.updateById(solution);
+                judgeResultDTO.getExecuteInfo().add(JudgeReturnInfo.of(
+                        JudgeStatus.UNKNOWN_ERROR.getType(),
+                        testFileOriginalName,
+                        null,
+                        null,
+                        null
+                ));
+            }
+        }
+
+        for(Future<JudgeReturnInfo> judgeReturnInfoAsyncResult:asyncList){
+            judgeReturnInfo = judgeReturnInfoAsyncResult.get();
+            judgeResultDTO.getExecuteInfo().add(judgeReturnInfo);
+        }
+
+        //update solution table
+        {
+            List<JudgeReturnInfo> list = judgeResultDTO.getExecuteInfo();
+            Integer time = 0;
+            Integer memory = 0;
+            String error = null;
+            int passCase = 0;
+            int failCase = 0;
+
+            for(JudgeReturnInfo tmp:list){
+                if(!tmp.getStatus().equals("AC")){
+                    if(error == null) error = tmp.getStatus();
+                    failCase++;
+                }else{
+                    time+=tmp.getExecuteTime()==null?0:(int)(long)tmp.getExecuteTime();
+                    memory+=tmp.getExecuteMem()==null?0:(int)(long)tmp.getExecuteMem();
+                    passCase++;
+                }
+            }
+
+            //无测试用例时候，后台记录AC,但是不返回
+            if(passCase+failCase==0){
+                solution.setResult(JudgeStatus.ACCEPTED.getType());
+                solution.setTime(0);
+                solution.setMemory(0);
+                solution.setPass_rate(1.0d);
+            }else{
+                double passRate = (double)passCase/((double)passCase+(double)failCase);
+                if(error!=null){
+                    solution.setResult(error);
+                }else{
+                    solution.setResult(JudgeStatus.ACCEPTED.getType());
+                    solution.setTime(time);
+                    solution.setMemory(memory);
+                }
+                solution.setPass_rate(passRate);
+            }
+
+            solutionService.updateById(solution);
+        }
+        return judgeResultDTO;
+    }
+
+    private JudgeReturnInfo readJudgeResultv2(String path) throws Exception{
+        BufferedReader in = new BufferedReader(new FileReader(path));
+        String str = in.readLine();
+        String[] strs = str.split(" ");
+        HashMap<String,String> map = new HashMap<>();
+
+        for (String tmp : strs) {
+            map.put(tmp.split(":")[0],tmp.split(":")[1]);
+        }
+        JudgeReturnInfo judgeReturnInfo = new JudgeReturnInfo();
+        judgeReturnInfo.setStatus(map.getOrDefault("flag",null));
+        judgeReturnInfo.setExecuteTime(Long.parseLong(map.getOrDefault("ms",null)));
+        judgeReturnInfo.setExecuteMem(Long.parseLong(map.getOrDefault("mb",null)));
+        return judgeReturnInfo;
+    }
+
+    @Async("taskExecutor")
+    public AsyncResult<JudgeReturnInfo> executev2(LanguageInfo languageInfo,String workDir, String inAndOutDir,String originInFileName, double timeLimit, int memoryLimit) {
+        String standardInputFile = inAndOutDir+originInFileName+".in";
+        String standardOutputFIle = inAndOutDir+originInFileName+".out";
+        String userOutPutFile = workDir+originInFileName+".out";
+        String userErrorFile = workDir+originInFileName+".error";
+        String judgeResult = workDir+originInFileName+".result";
+        //magic value,MB
+        int maxFileSize = 128;
+
+        JudgeReturnInfo judgeReturnInfo = new JudgeReturnInfo();
+        judgeReturnInfo.setStatus("UE");
+
+        try{
+            ProcessBuilder cJudgeProcessBuilder = new ProcessBuilder(List.of("/tools/judgev2-cmd",((int) timeLimit)+"",memoryLimit+"",maxFileSize+"",standardInputFile,standardOutputFIle,userOutPutFile,userErrorFile,workDir,languageInfo.getCode()+"",judgeResult));
+            Process cJudgeProcess = cJudgeProcessBuilder.start();
+            if (cJudgeProcess.waitFor((((int)timeLimit)/1000+(((int)timeLimit)%1000>0?1:0))*2, TimeUnit.SECONDS)) {
+                if (cJudgeProcess.isAlive()) {
+                    cJudgeProcess.destroy();
+                } else {
+                    judgeReturnInfo = readJudgeResultv2(judgeResult);
+                }
+            }
+        }catch (Exception e){
+
+        }
+        judgeReturnInfo.setTestCase(originInFileName);
+        return new AsyncResult<>(judgeReturnInfo);
     }
 }

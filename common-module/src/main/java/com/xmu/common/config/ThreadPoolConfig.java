@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
@@ -27,8 +28,8 @@ public class ThreadPoolConfig {
 
     private static final String threadNamePrefix="open-oj-thread-";
 
-    @Bean
-    public ThreadPoolTaskExecutor taskExecutor(){
+    @Bean("taskExecuator")
+    public Executor taskExecutor(){
         ThreadPoolTaskExecutor executor=new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(corePoolSize);
         executor.setMaxPoolSize(maxPoolSize);
@@ -40,4 +41,5 @@ public class ThreadPoolConfig {
         executor.initialize();
         return executor;
     }
+
 }
