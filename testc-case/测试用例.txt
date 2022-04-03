@@ -1,0 +1,122 @@
+POST IP:8088/problem/1000/judge
+
+0、用户程序内存超限（OK）
+{
+    "userId":2,
+    "code":"#include <iostream>\nusing namespace std;\nint main(){\n    int a,b;\n    while(true) new int(10);\n    return 0;\n}",
+    "language":"cpp"
+}
+1、运行错误（OK)
+通过返回值判断，非0返回+答案错误就是运行错误
+{
+    "userId":2,
+    "code":"#include <iostream>\nusing namespace std;\nint main(){\n    int*p = 0;\n *p=888;\n return 0;\n}",
+    "language":"cpp"
+}
+2、没有输出（OK）
+{
+    "userId":2,
+    "code":"#include <iostream>\nusing namespace std;\nint main(){\n    int a,b;\n  return 0;\n}",
+    "language":"cpp"
+}
+3、一直输出（OK）
+{
+    "userId":2,
+    "code":"#include <iostream>\nusing namespace std;\nint main(){\n    int a,b;\n    while(true) cout<<1<<endl;\n    return 0;\n}",
+    "language":"cpp"
+}
+4、死循环（OK）
+{
+    "userId":2,
+    "code":"#include <iostream>\nusing namespace std;\nint main(){\n    int a,b;\n    while(true);\n    return 0;\n}",
+    "language":"cpp"
+}
+5、编译错误（OK）
+{
+    "userId":2,
+    "code":"#include <iostream>\nusing namespace std;\nint main(){\n    int a,b;\n    while(true)\n    return 0\n}",
+    "language":"cpp"
+}
+6、恶意编译超时（OK）
+{
+    "userId":2,
+    "code":"#include <iostream>\n#include</dev/random>\nusing namespace std;\nint main(){\n    int a,b;\n    while(true)\n    return 0\n}",
+    "language":"cpp"
+}
+
+8、无敌fork炸弹(OK)
+*必须使用动态运行库进行保护，否则计算机将不得不重启
+{
+    "userId":2,
+    "code":"#include <iostream>\n#include <sys/wait.h>\n#include <unistd.h>\nusing namespace std;\nint main(){\n    int a,b;\n    while(1) pid_t c_pid = fork();\n while(1);    return 0;\n}",
+    "language":"cpp"
+}
+9、程序恶意删除文件（OK）
+{
+    "userId":2,
+    "code":"#include<iostream>\n#include<cstdio>\n\nusing namespace std;\n\nint main()\n{\n    char savePath[256] = \"/user/2/problem/1000/submit/1094/Main.cpp\";\n\n    if(remove(savePath)==0)\n    {\n        cout<<\"删除成功\"<<endl;\n    }\n    else\n    {\n        cout<<\"删除失败\"<<endl;\n    }\n    return 0;\n}",
+    "language":"cpp"
+}
+10、恶意系统调用-关机（OK）
+{
+    "userId":2,
+    "code":"#include <unistd.h>\n#include <linux/reboot.h>\n\n\nint main() {\n    reboot(LINUX_REBOOT_MAGIC1, \n           LINUX_REBOOT_MAGIC2, \n           LINUX_REBOOT_CMD_POWER_OFF, 0);\n    //   sync();\n    //    reboot(LINUX_REBOOT_CMD_POWER_OFF);\n}",
+    "language":"c"
+}
+11、恶意系统调用-重启（OK）
+（这里报WA，因为系统根本就不会去执行命令，没有被拦截）
+{
+    "userId":2,
+    "code":"#include <stdio.h>\n#include <stdlib.h>\n#include <time.h>\n#include <sys/time.h>\n#include <stdarg.h>\n\n#define BUFFER_SIZE 4096\n#define GET_INFO_INTERVAL 1000000 //ns 1000000ns=1ms\n#define _POSIX_C_SOURCE 199309L\nint execute_cmd(const char *fmt, ...)   {//执行命令获得返回值\n\tchar cmd[BUFFER_SIZE];\n\n\tint ret = 0;\n\tva_list ap;\n\n\tva_start(ap, fmt);\n\tvsprintf(cmd, fmt, ap);\n\tret = system(cmd);\n\tva_end(ap);\n\treturn ret;\n}\nint main(){\nchar cmd[BUFFER_SIZE]=\"reboot\";\n\t\t\t\texecute_cmd(&cmd);\n}",
+    "language":"c"
+}
+12、恶意创建socket（OK）
+{
+    "userId":2,
+    "code":"#include<stdio.h>\n#include<sys/socket.h> \n\nint main(int argc , char *argv[])\n{\n\tint socket_desc;\n\tsocket_desc = socket(AF_INET , SOCK_STREAM , 0);\n\t\n\tif (socket_desc == -1)\n\t{\n\t\tprintf(\"Could not create socket\");\n\t}\n\t\n\treturn 0;\n}",
+    "language":"c"
+}
+13、恶意连接远程服务器
+{
+    "userId":2,
+    "code":"#include<stdio.h>\n#include<sys/socket.h>\n#include<arpa/inet.h>\t//inet_addr\n\nint main(int argc , char *argv[])\n{\n\tint socket_desc;\n\tstruct sockaddr_in server;\n\t\n\t//Create socket\n\tsocket_desc = socket(AF_INET , SOCK_STREAM , 0);\n\tif (socket_desc == -1)\n\t{\n\t\tprintf(\"Could not create socket\");\n\t}\n\t\t\n\tserver.sin_addr.s_addr = inet_addr(\"74.125.235.20\");\n\tserver.sin_family = AF_INET;\n\tserver.sin_port = htons( 80 );\n\n\t//Connect to remote server\n\tif (connect(socket_desc , (struct sockaddr *)&server , sizeof(server)) < 0)\n\t{\n\t\tputs(\"connect error\");\n\t\treturn 1;\n\t}\n\t\n\tputs(\"Connected\");\n\treturn 0;\n}",
+    "language":"c"
+}
+14、禁止读写
+{
+    "userId":2,
+    "code":"#include <stdio.h>\n \nint main()\n{\n   FILE *fp = NULL;\n char tmp1[4096]=\"/user/test.txt\";\n   fp = fopen(tmp1, \"w+\");\nchar tmp2[4096]=\"This is testing for fprintf\";\n   fprintf(fp, tmp2);\n   //fclose(fp);\n}",
+    "language":"c"
+}
+
+禁止编译时文件读取
+{
+    "userId":2,
+    "code":"#include \"/problem/1000/testData/sample.in\" \nusing namespace std;\nint main(){\n    int a,b;\n    while(true)\n    return 0\n}",
+    "language":"cpp"
+}
+恶意编译出巨大文件（GCC新版好像修复了BUG，不知道怎么营造出这种BUG）
+{
+    "userId":2,
+    "code":"int main(){\n    int main[-1u]={0,};       return 0;\n}",
+    "language":"c"
+}
+
+*正常
+{
+    "userId":2,
+    "code":"#include <iostream>\nusing namespace std;\nint main(){\n    int a,b;\n    while(cin>>a>>b) cout<<a+b<<endl;\n    return 0;\n}",
+    "language":"cpp"
+}
+正常JAVA（暂时无法配合运行库限制使用）
+{
+    "userId":2,
+    "code":"import java.util.Scanner;\n\npublic class Main{\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        while(sc.hasNext()){\n            int a = sc.nextInt(), b= sc.nextInt();\n            System.out.println(a+b);\n        }\n    }\n}",
+    "language":"java"
+}
+*正常休眠+执行4秒(这个时间限制大体上是精确的）
+{
+    "userId":2,
+    "code":"#include <iostream>\n#include<unistd.h>\nusing namespace std;\nint main(){\n    int a,b;\n   sleep(4);\n while(cin>>a>>b) cout<<a+b<<endl;\n    return 0;\n}",
+    "language":"cpp"
+}
