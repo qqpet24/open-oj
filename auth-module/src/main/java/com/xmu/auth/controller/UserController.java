@@ -95,4 +95,17 @@ public class UserController {
     public Object changeRoleById(@RequestParam Integer role, @PathVariable Long id){
         return userService.changeRoleById(id,role);
     }
+
+    @GetMapping("/top/all")
+    @ApiOperation("top N score")
+    public Object getUserByScoreDesc(){
+        return userService.getUserByScoreDesc();
+    }
+
+    @PutMapping("/{id}/reset")
+    @ApiOperation("重置用户密码，重置用户密码为123456")
+    public Object resetUserPassword(@PathVariable Long id){
+        //TODO:check role
+        return userService.resetUserPassword(id);
+    }
 }

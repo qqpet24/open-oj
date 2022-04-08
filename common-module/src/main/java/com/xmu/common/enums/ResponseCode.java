@@ -23,7 +23,8 @@ public enum ResponseCode {
     NEW_REPLY_SHOULD_NOT_INCLUDE_ID(512,"新增评论不应该含有评论ID"),
     NOT_ADMIN(513,"不是管理员"),
     PROBLEM_NOT_MATCH(514,"传入参数问题与原问题不匹配"),
-    SEND_MAIL_PARTIAL_OR_ALL_FAILED(515,"发送邮件部分或者全部失败");
+    SEND_MAIL_PARTIAL_OR_ALL_FAILED(515,"发送邮件部分或者全部失败"),
+    BLOCKED_ACCOUNT(516,"账户已经被冻结");
     private final int code;
     private final String msg;
 

@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.NotAuthorizedException;
+
 /**
  * @author summer
  * @see <a href=""></a><br/>

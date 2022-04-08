@@ -1,5 +1,6 @@
 package com.xmu.auth.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xmu.auth.config.security.JwtUser;
@@ -10,6 +11,7 @@ import com.xmu.auth.mapper.UserMapper;
 import com.xmu.auth.request.UserProfileVo;
 import com.xmu.auth.request.UserVo;
 import com.xmu.auth.response.UserBriefDTO;
+import com.xmu.auth.response.UserRankDTO;
 import com.xmu.auth.service.UserProfileService;
 import com.xmu.auth.service.UserService;
 import com.xmu.common.enums.ResponseCode;
@@ -27,7 +29,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.NotAuthorizedException;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,7 +64,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public Object login(UserVo userVo, HttpServletRequest request) {
-        //spring security
+        User tmpUser = this.getOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, userVo.getUsername()));
+        if(tmpUser!=null){
+            if(tmpUser.getRoleId().equals(3L)) return Response.of(ResponseCode.BLOCKED_ACCOUNT).entity(UNAUTHORIZED);
+        }
         UsernamePasswordAuthenticationToken upToken
                 = new UsernamePasswordAuthenticationToken(userVo.getUsername(), userVo.getPassword());
         Authentication authentication
@@ -129,6 +136,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Object modifyRoleOfUser(Long userId, String role) {
         User user = getById(userId);
         switch (role) {
+            case "blocked" -> user.setRoleId(3L);
             case "common" -> user.setRoleId(2L);
             case "admin" -> user.setRoleId(1L);
         }
@@ -199,6 +207,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User updateUser = user.setRoleId(Long.valueOf(role));
         this.updateById(updateUser);
         return Response.of(ResponseCode.OK);
+    }
+
+    @Override
+    public Object getUserByScoreDesc() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc("score");
+        List<User> list = this.list(queryWrapper);
+        List<UserRankDTO> resultList = new LinkedList<>();
+        for(User user:list){
+            resultList.add(new UserRankDTO(user));
+        }
+        return resultList;
+    }
+
+    @Override
+    public Object resetUserPassword(Long id) {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        User user = this.getById(id);
+        if(user==null){
+            return ResponseCode.USER_NOT_EXIST;
+        }else{
+            user.setPassword(encoder.encode("123456"));
+            boolean result = this.updateById(user);
+            if(result) return ResponseCode.OK;
+            else return ResponseCode.INTERNAL_SERVER_ERROR;
+        }
     }
 
 }

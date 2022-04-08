@@ -32,4 +32,7 @@ public interface UserService extends IService<User>{
 
     Object changeRoleById(Long id, Integer role);
 
+    Object getUserByScoreDesc();
+
+    Object resetUserPassword(Long id);
 }
