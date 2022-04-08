@@ -6,18 +6,18 @@ import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import com.xmu.common.enums.ResponseCode;
 import com.xmu.common.utils.Jwt;
 import com.xmu.common.utils.Response;
-import com.xmu.file.domain.File;
+import com.xmu.file.domain.MyFile;
+import com.xmu.file.domain.TestDataDTO;
 import com.xmu.file.service.FileService;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
@@ -58,7 +58,7 @@ public class FileController {
             //TODO:如果是图片类型，则放如img group
             StorePath storePath = storageClient.uploadFile(builder.build());
             String path = storePath.getFullPath();
-            boolean saved = fileService.save(File.of(
+            boolean saved = fileService.save(MyFile.of(
                     null,
                     filename,
                     userId,
@@ -73,6 +73,29 @@ public class FileController {
             return Response.of(ResponseCode.INTERNAL_SERVER_ERROR).setMsg(e.getMessage()).entity(INTERNAL_SERVER_ERROR);
         }
         return Response.of(ResponseCode.INTERNAL_SERVER_ERROR).entity(INTERNAL_SERVER_ERROR);
+    }
+
+    @PostMapping("/unix/upload")
+    @ApiOperation("file upload")
+    public Object uploadFile(@ModelAttribute TestDataDTO testDataDTO) {
+        try {
+            String path;
+            if(testDataDTO.getType()==0){
+                path = "/problem/"+testDataDTO.getProblemId()+"/testData";
+            }else{
+                path = "/file/unix/upload";
+            }
+            File target = new File(path);
+            if(!target.exists()){
+                target.mkdirs();
+            }
+            String fileName = path+"/"+testDataDTO.getFile().getOriginalFilename();
+            File tmpFile = new File(fileName);
+            testDataDTO.getFile().transferTo(tmpFile);
+        } catch (IOException e) {
+            return Response.of(ResponseCode.INTERNAL_SERVER_ERROR).setMsg(e.getMessage()).entity(INTERNAL_SERVER_ERROR);
+        }
+        return Response.of(ResponseCode.OK);
     }
 
 }

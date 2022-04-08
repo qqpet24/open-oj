@@ -17,7 +17,7 @@ import java.util.Date;
 @AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 @Accessors(chain = true)
-public class File {
+public class MyFile {
     @TableId(type=IdType.AUTO)
     private Long id;
     private String filename;

@@ -5,10 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xmu.common.enums.ResponseCode;
 import com.xmu.common.utils.IpUtil;
 import com.xmu.common.utils.Response;
-import com.xmu.problem.domain.CompileInfo;
-import com.xmu.problem.domain.Problem;
-import com.xmu.problem.domain.Solution;
-import com.xmu.problem.domain.SourceCode;
+import com.xmu.problem.domain.*;
 import com.xmu.problem.mapper.ProblemMapper;
 import com.xmu.problem.reponse.JudgeResultDTO;
 import com.xmu.problem.reponse.JudgeReturnInfo;
@@ -22,6 +19,7 @@ import com.xmu.problem.service.SourceCodeService;
 import com.xmu.problem.request.util.JudgeStatus;
 import com.xmu.problem.request.util.LanguageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
@@ -743,5 +741,23 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         }
         judgeReturnInfo.setTestCase(originInFileName);
         return new AsyncResult<>(judgeReturnInfo);
+    }
+
+    @Value("${fileService.downloadUrl}")
+    private String fileDownloadPath;
+
+    @Override
+    public Object getTestCaseNameById(Long id) {
+        String inAndOutDir = String.format(
+                "/problem/%d/testData/",
+                id
+        );
+        List<String> testFileOriginalNameList = getTestFileName(inAndOutDir);
+        List<TestCaseDTO> result = new LinkedList<>();
+        for(String tmp:testFileOriginalNameList){
+            result.add(new TestCaseDTO().setFilename(tmp+".in").setPath(fileDownloadPath+"/problem/"+id+"/testData/"+tmp+".in"));
+            result.add(new TestCaseDTO().setFilename(tmp+".out").setPath(fileDownloadPath+"/problem/"+id+"/testData/"+tmp+".out"));
+        }
+        return result;
     }
 }

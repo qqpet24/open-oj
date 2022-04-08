@@ -68,4 +68,10 @@ public class ProblemController {
     public Object getBasicProblemInfo(@PathVariable Long id){
         return problemService.getBasicProblemInfo(id);
     }
+
+    @GetMapping("/{id}/case")
+    @ApiOperation("获取题目测试用例名称")
+    public Object getTestCaseNameById(@PathVariable Long id){
+        return problemService.getTestCaseNameById(id);
+    }
 }

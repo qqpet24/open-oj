@@ -32,3 +32,6 @@ task:
     maxPoolSize: 6  #设置最大线程数
     keepAliveSeconds: 300 #设置线程活跃时间（秒）
     queueCapacity: 500 #设置队列容量
+
+fileService:
+  downloadUrl: http://192.168.66.130:8188 #路径后不加/
