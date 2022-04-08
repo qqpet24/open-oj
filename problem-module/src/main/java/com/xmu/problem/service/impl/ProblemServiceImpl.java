@@ -1,5 +1,6 @@
 package com.xmu.problem.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xmu.common.enums.ResponseCode;
@@ -10,14 +11,13 @@ import com.xmu.problem.mapper.ProblemMapper;
 import com.xmu.problem.reponse.JudgeResultDTO;
 import com.xmu.problem.reponse.JudgeReturnInfo;
 import com.xmu.problem.reponse.ProblemBriefDTO;
+import com.xmu.problem.reponse.ProblemListDTO;
 import com.xmu.problem.request.JudgeDTO;
 import com.xmu.problem.request.ProblemDTO;
-import com.xmu.problem.service.CompileInfoService;
-import com.xmu.problem.service.ProblemService;
-import com.xmu.problem.service.SolutionService;
-import com.xmu.problem.service.SourceCodeService;
+import com.xmu.problem.service.*;
 import com.xmu.problem.request.util.JudgeStatus;
 import com.xmu.problem.request.util.LanguageInfo;
+import jnr.ffi.annotations.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
@@ -56,6 +56,29 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
 
     @Autowired
     private CompileInfoService compileInfoService;
+
+    @Autowired
+    private ProblemListService problemListService;
+
+    @Override
+    public Object problemFilter(String category, Long problemListId, Long difficulty) {
+        QueryWrapper<Problem> queryWrapper = new QueryWrapper<>();
+        if(category!=null) queryWrapper.like("categories","\""+category+"\"");
+        if(difficulty!=null) queryWrapper.eq("difficulty",difficulty);
+        List<Problem> list = this.list(queryWrapper);
+        if(problemListService!=null){
+            ProblemList problemList = problemListService.getById(problemListId);
+            if(problemList!=null){
+                List array = problemList.getProblems();
+                HashSet<Long> set = new HashSet<>();
+                for(Object object:array){
+                    set.add(Long.valueOf((Integer)object));
+                }
+                list.removeIf(problem -> !set.contains(problem.getId()));
+            }
+        }
+        return list;
+    }
 
     @Override
     public Object getProblems() {
@@ -759,5 +782,41 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
             result.add(new TestCaseDTO().setFilename(tmp+".out").setPath(fileDownloadPath+"/problem/"+id+"/testData/"+tmp+".out"));
         }
         return result;
+    }
+
+    @Override
+    public Object getAllSubmit() {
+        List<Solution> list = solutionService.list(null);
+        List<FixTimeSolution> finalResult = new LinkedList<>();
+        for(Solution solution:list){
+            finalResult.add(new FixTimeSolution(solution));
+        }
+        return finalResult;
+    }
+
+    @Override
+    public Object submitFilter(Long problemId, Long userId, String status,String problemName) {
+        QueryWrapper<Solution> queryWrapper = new QueryWrapper<>();
+        if(problemId!=null) queryWrapper.like("problem_id",problemId);
+        if(userId!=null) queryWrapper.eq("user_id",userId);
+        if(status!=null) queryWrapper.eq("result",status);
+        List<Solution> list = solutionService.list(queryWrapper);
+
+        if(problemName!=null){
+            QueryWrapper<Problem> queryWrapper1 = new QueryWrapper<>();
+            queryWrapper1.like("title",problemName);
+            List<Problem> problemList = this.list(queryWrapper1);
+            HashSet<Long> set = new HashSet<>();
+            for(Problem problem:problemList){
+                set.add(problem.getId());
+            }
+            list.removeIf(solution -> !set.contains(solution.getProblemId()));
+        }
+
+        List<FixTimeSolution> finalResult = new LinkedList<>();
+        for(Solution solution:list){
+            finalResult.add(new FixTimeSolution(solution));
+        }
+        return finalResult;
     }
 }

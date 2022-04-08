@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -31,6 +30,6 @@ public class Solution {
     private String ip;
     private Integer valid;
     private Integer codeLength;
-    private LocalDateTime judgeTime;
+    private LocalDateTime judgetime;
     private Double pass_rate;
 }

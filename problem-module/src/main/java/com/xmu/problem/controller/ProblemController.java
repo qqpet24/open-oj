@@ -25,6 +25,14 @@ public class ProblemController {
     @Autowired
     private UserService userService;
 
+    @GetMapping("")
+    @ApiOperation("根据category，list，difficulty筛选题目  (参数是可选)")
+    public Object problemFilter(@RequestParam(required = false) String category,
+                                @RequestParam(required = false) Long problemListId,
+                                @RequestParam(required = false) Long difficulty) {
+        return problemService.problemFilter(category,problemListId,difficulty);
+    }
+
     @GetMapping("/{id}")
     @ApiOperation("获取题目详情")
     public Object getProblem(@PathVariable Long id) {
@@ -73,5 +81,20 @@ public class ProblemController {
     @ApiOperation("获取题目测试用例名称")
     public Object getTestCaseNameById(@PathVariable Long id){
         return problemService.getTestCaseNameById(id);
+    }
+
+    @GetMapping("/status/all")
+    @ApiOperation("获取所有的用户提交")
+    public Object getAllSubmit(){
+        return problemService.getAllSubmit();
+    }
+
+    @GetMapping("/status")
+    @ApiOperation("根据problem name，user和status筛选出用户提交（参数是可选的）")
+    public Object submitFilter(@RequestParam(required = false) Long problemId,
+                               @RequestParam(required = false) Long userId,
+                               @RequestParam(required = false) String status,
+                               @RequestParam(required = false) String problemName){
+        return problemService.submitFilter(problemId,userId,status,problemName);
     }
 }

@@ -13,6 +13,8 @@ import java.util.concurrent.Future;
  * @see <a href=""></a><br/>
  */
 public interface ProblemService extends IService<Problem> {
+    Object problemFilter(String category,Long problemListId,Long difficulty);
+
     Object getProblems();
 
     Object getProblem(Long id);
@@ -28,4 +30,8 @@ public interface ProblemService extends IService<Problem> {
     Object getBasicProblemInfo(Long id);
 
     Object getTestCaseNameById(Long id);
+
+    Object getAllSubmit();
+
+    Object submitFilter(Long problemId,Long userId,String status,String problemName);
 }
