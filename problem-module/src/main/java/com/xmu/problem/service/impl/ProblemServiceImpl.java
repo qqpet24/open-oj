@@ -3,6 +3,8 @@ package com.xmu.problem.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xmu.auth.domain.User;
+import com.xmu.auth.service.UserService;
 import com.xmu.common.enums.ResponseCode;
 import com.xmu.common.utils.IpUtil;
 import com.xmu.common.utils.Response;
@@ -59,6 +61,9 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
 
     @Autowired
     private ProblemListService problemListService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public Object problemFilter(String category, Long problemListId, Long difficulty) {
@@ -544,7 +549,12 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
         //未完成，必做，问题存在检查
         if (problem == null) {
             throw new Exception("Problem no found");
+        }else{
+            Integer submit = problem.getSubmit()==null?1:problem.getSubmit()+1;
+            problem.setSubmit(submit);
+            this.updateById(problem);
         }
+
         if (language == null || languageInfo == null) {
             throw new Exception("Language no support");
         }
@@ -716,6 +726,23 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, Problem> impl
             }
 
             solutionService.updateById(solution);
+
+            if(passCase > 0 && failCase == 0) {
+                //score plus 1 and problem accepted plus 1
+                User user = userService.getById(userId);
+                if(user!=null){
+                    Integer score = user.getScore()!=null?user.getScore()+1:1;
+                    user.setScore(score);
+                    userService.updateById(user);
+
+                    Problem problem1 = this.getById(id);
+                    if(problem1!=null){
+                        Integer accepted = problem1.getAccepted()!=null?problem1.getAccepted()+1:1;
+                        problem1.setAccepted(accepted);
+                        this.updateById(problem1);
+                    }
+                }
+            }
         }
         return judgeResultDTO;
     }
